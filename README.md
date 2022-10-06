@@ -11,4 +11,5 @@ python<version> -m venv <virtual-environment-name>
 
 2. Run the Enviornment Activaiton Script
  - Ensure it activates
+
 pip install -r requirements.txt
