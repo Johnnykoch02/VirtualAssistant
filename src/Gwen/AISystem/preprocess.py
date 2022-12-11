@@ -2,14 +2,15 @@
 import librosa
 import os
 from sklearn.model_selection import train_test_split
-from tensorflow import keras
-from keras import utils 
-from tensorflow.keras.utils import to_categorical
 import numpy as np
 from tqdm import tqdm
 
-Data_Path = "./data/"
+Data_Path = "C:/Users/John/OneDrive/GwenSmartHome/data/Models/SpeechModel/Training/"
 
+
+def to_categorical(y, num_classes):
+    """ 1-hot encodes a tensor """
+    return np.eye(num_classes, dtype='uint8')[y]
 
 # Input: Folder Path
 # Output: Tuple (Label, Indices of the labels, one-hot encoded labels)
@@ -21,10 +22,40 @@ def get_labels(path=Data_Path):
 
 # convert file to wav2mfcc
 # Mel-frequency cepstral coefficients
-def wav2mfcc(file_path, n_mfcc=20, max_len=11):
+def audioDataTomfcc(sound, max_len=64, n_mfcc=72):
+    byte_data, sr, sw = sound.get_wav_data(), sound.sample_rate, sound.sample_width
+    data_s16 = np.frombuffer(byte_data, dtype=np.int16, count=len(byte_data)//2, offset=0)
+    float_data = data_s16 * 0.5**15 
+    wave = float_data[::3]
+    mfcc = librosa.feature.mfcc(y=wave, sr=sr, n_mfcc=n_mfcc)
+    if (max_len > mfcc.shape[1]):
+        pass
+        # pad_width = max_len - mfcc.shape[1]
+        # mfcc = np.pad(mfcc, pad_width=((0, 0), (0, pad_width)), mode='constant')
+    else:
+        mfcc = mfcc[:, :max_len]
+    return mfcc
+
+def wav2mfcc(file_path, max_len=48, n_mfcc=72):
     wave, sr = librosa.load(file_path, mono=True, sr=None)
-    wave = np.asfortranarray(wave[::3])
-    mfcc = librosa.feature.mfcc(wave, sr=16000, n_mfcc=n_mfcc)
+    wave = np.array(wave[::3])
+    mfcc = librosa.feature.mfcc(y=wave, sr=sr, n_mfcc=n_mfcc)
+
+    # If maximum length exceeds mfcc lengths then pad the remaining ones
+    if (max_len > mfcc.shape[1]):
+        pad_width = max_len - mfcc.shape[1]
+        mfcc = np.pad(mfcc, pad_width=((0, 0), (0, pad_width)), mode='constant')
+
+    # Else cutoff the remaining parts
+    else:
+        mfcc = mfcc[:, :max_len]
+    return mfcc
+
+def npy2mfcc(file_path, max_len=64, n_mfcc=72):
+    npz_file = np.load(file_path)
+    wave = npz_file['audio_data']
+    sr = npz_file['sample_rate']
+    mfcc = librosa.feature.mfcc(y=wave, sr=sr, n_mfcc=n_mfcc)
 
     # If maximum length exceeds mfcc lengths then pad the remaining ones
     if (max_len > mfcc.shape[1]):
@@ -37,8 +68,7 @@ def wav2mfcc(file_path, n_mfcc=20, max_len=11):
     
     return mfcc
 
-
-def save_data_to_array(path=Data_Path, max_len=11, n_mfcc=20):
+def save_data_to_array(path=Data_Path, max_len=64, n_mfcc=72):
     labels, _, _ = get_labels(path)
 
     for label in labels:
@@ -85,7 +115,7 @@ def prepare_dataset(path=Data_Path):
             wave, sr = librosa.load(wavfile, mono=True, sr=None)
             # Downsampling
             wave = wave[::3]
-            mfcc = librosa.feature.mfcc(wave, sr=16000)
+            mfcc = librosa.feature.mfcc(wave, sr=sr)
             vectors.append(mfcc)
 
         data[label]['mfcc'] = vectors
@@ -103,4 +133,4 @@ def load_dataset(path=Data_Path):
             dataset.append((key, mfcc))
 
     return dataset[:100]
-# prepare_dataset("D:/OneDrive/GwenSmartHome/data/Models/SpeechModel/Training/")
+# prepare_dataset("C:/Users/John/OneDrive/GwenSmartHome/data/Models/SpeechModel/Training/")

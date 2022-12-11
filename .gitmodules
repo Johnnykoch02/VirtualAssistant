@@ -1,6 +1,6 @@
-[submodule "src/LEDTemp"]
-	path = ./src/LEDTemp
-	url = https://github.com/scottlawsonbc/audio-reactive-led-strip
-[submodule "src/Gwen/APIHandlers/spotipy"]
-	path = ./src/Gwen/APIHandlers/spotipy
-	url = https://github.com/plamere/spotipy
+# [submodule "src/LEDTemp"]
+# 	path = ./src/LEDTemp
+# 	url = https://github.com/scottlawsonbc/audio-reactive-led-strip
+# [submodule "src/Gwen/APIHandlers/spotipy"]
+# 	path = ./src/Gwen/APIHandlers/spotipy
+# 	url = https://github.com/plamere/spotipy

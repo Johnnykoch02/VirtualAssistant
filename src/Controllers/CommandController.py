@@ -31,8 +31,14 @@ class CommandController(object):
             ],
             'led': [
                 'mode', 'party', 
+            ],
+            'chrome': [
+                'search','go','to'
             ]
         }
+
+        self.current_state = None 
+
 
     def process(self):
 
@@ -49,10 +55,19 @@ class CommandController(object):
         tagged = pos_tag(word_tokenize(sample_text))
         commands = []
         langInc = langIncrementer()
-        currCmd = []
+        currCmd = []    
         currData = ''
         tempData = ''
-        for token in tagged:
+        
+
+                     # Chunk everything
+                     # Chink sequences of VBD and IN
+        # cp = RegexpParser(grammar)
+        # result = cp.parse(tagged)
+
+
+
+        for i, token in enumerate(tagged):
             if 'VB' in token[1]:
                 if langInc.curr() == langInc.ptrs.VERB:
                     '''HIT'''

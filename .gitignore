@@ -74,6 +74,10 @@ instance/
 # Scrapy stuff:
 .scrapy
 
+#numpy data
+*.npy
+*.npz
+
 # Sphinx documentation
 docs/_build/
 
