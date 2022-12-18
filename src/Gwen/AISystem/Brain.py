@@ -14,7 +14,8 @@ class Brain:
     ''' 
         This class is designed to do advanced operations such as automated data collection, intelectual thought, and research.
     '''
-    
+    def __init__(self):
+        pass
     
     def CollectData(self, topic, links=[]):
         responses = []

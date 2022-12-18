@@ -2,16 +2,17 @@
 import os
 from preprocess import *
 import subprocess
-import tensorflow as tf
 import numpy as np
 import librosa
 from sklearn.model_selection import train_test_split
 from keras.utils import to_categorical
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPooling2D, LSTM
-# import wandb
-# from wandb.keras import WandbCallback
 import matplotlib.pyplot as plt
+import torch as th
+import torch.nn as nn
+from torch.utils.data import DataLoader
+
+
+
 
 
 try:
@@ -63,10 +64,51 @@ class KeywordAudioModel(nn.Module):
         https://arxiv.org/pdf/2005.06720v2.pdf
         The structure of the network is designed to implement the following Paper.
     '''
-    def __init__(self, input_shape):
+    def __init__(self, input_shape, lr=0.015):
         super(KeywordAudioModel, self).__init__()
-        '''3x36x48'''
+        '''3x64x48'''
+        
         self.layers = nn.Sequential(
-            nn.BatchNorm2D(input_shape)
-            nn.Conv2D(in_channels=3, out_channels=)
+            nn.BatchNorm2d(input_shape),
+            nn.Conv2d(in_channels=1, out_channels=5, kernel_size=(5,7), padding=5, bias=True), # output (5 x 78 x 68)
+            nn.LeakyReLU(),
+            nn.Conv2d(in_channels=5, out_channels=10, kernel_size=(4,4), stride=2), # Output (10 x 38 x 33)
+            nn.LeakyReLU(),
+            nn.Conv2d(in_channels=10, out_channels=20, kernel_size=(6,5), stride=4), # Output (20 x 9 x 8)
+            nn.LeakyReLU(),
+            nn.Flatten(),
+            nn.Linear(1440, 2600),
+            nn.LeakyReLU(),
+            nn.Dropout(0.05),
+            nn.Linear(2600, 900, bias=True), 
+            nn.Sigmoid(),
+            nn.Linear(900, 120),
+            nn.Sigmoid(),
+            nn.Linear(120, 16),
+            nn.Sigmoid(),
+            nn.Linear(16, 1),
+            nn.Sigmoid()
         )
+        
+        self._loss_func = nn.CrossEntropyLoss()
+        self._optimizer = th.optim.Adam(self.parameters, lr=lr)
+        
+    def forward(self, x):
+        x = self.layers(x)
+        return x
+    
+    def train(self, num_epochs, data_loader: DataLoader):
+        from torch.autograd import Variable
+        
+        total_steps = len(data_loader['train'])
+          
+        for epoch in range(num_epochs):
+            for i, (mel_imgs, output) in enumerate(data_loader['train']):
+                batch_x = Variable(mel_imgs)
+                batch_y = Variable(output)
+                
+                output = self.forward(batch_x)[0]
+                
+                
+                  
+        

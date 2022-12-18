@@ -36,7 +36,7 @@ def audioDataTomfcc(sound, max_len=64, n_mfcc=72):
         mfcc = mfcc[:, :max_len]
     return mfcc
 
-def wav2mfcc(file_path, max_len=48, n_mfcc=72):
+def wav2mfcc(file_path, max_len=64, n_mfcc=72):
     wave, sr = librosa.load(file_path, mono=True, sr=None)
     wave = np.array(wave[::3])
     mfcc = librosa.feature.mfcc(y=wave, sr=sr, n_mfcc=n_mfcc)

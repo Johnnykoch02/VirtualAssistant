@@ -10,8 +10,8 @@ def main():
     from src.Controllers import AudioController
     
     aud_cntrl = AudioController.AudioController()
-    aud_cntrl.set_stream_window(True)
-    # aud_cntrl.set_mode_collect_data(10, os.path.join(os.getcwd(), 'data', 'Models', 'KeywordModel', 'Training', 'Mel_Imgs', '0'), None)
+    # aud_cntrl.set_stream_window(True)
+    aud_cntrl.set_mode_collect_data(10000, os.path.join(os.getcwd(), 'data', 'Models', 'KeywordModel', 'Training', 'Mel_Imgs', '0'), None)
     while True:
         t.sleep(1.0)
 
