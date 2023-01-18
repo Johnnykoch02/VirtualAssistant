@@ -1,0 +1,5 @@
+client_id='4c7713b205ba4ff097e50ff00315bc1c'
+client_secret='2e9a3964684f48f895f60ce0ccd7bed7'   
+redirect_uri='http://google.com/'
+user=''
+passw=''
