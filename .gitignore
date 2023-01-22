@@ -139,3 +139,8 @@ dmypy.json
 .pyre/
 
 .private/*
+
+# Netflix
+/src/ApplicationInterface/Netflix/pickledcookies.pkl
+/src/ApplicationInterface/Netflix/my_secrets.py
+/src/ApplicationInterface/Netflix/logs/(venv)
