@@ -13,10 +13,11 @@ class AudioController(object):
     class AudioStates(Enum):
         SAMPLING = 0
         ENGAGED = 1
-        NEW_USER = 2
-        DATA_COLLECTION = 3
+        PROCESSING = 2
+        NEW_USER = 3
+        DATA_COLLECTION = 4
 
-    def __init__(self, keyword=''):
+    def __init__(self, keyword='', stream_visible=True):
         '''Basic Audio Control'''
         self.States = AudioController.AudioStates
         self.mic = sr.Microphone()
@@ -35,16 +36,15 @@ class AudioController(object):
         self.toggle = False
         self.new_user_Wait_flag = False
         
-        
         '''Data Collection Stuff'''
         self._data_path = None
         self._step_number = 0
-        self._stream_window_visble = False
+        self._stream_window_visble = stream_visible
         self._sample_episode = 100
         
         self.audio_th.start()
     
-    def set_mode_collect_data(self, num_steps, path, sample_episode=None):
+    def set_mode_collect_data (self, num_steps, path, sample_episode=None):
         self._data_path = path
         self._step_number = num_steps
         if sample_episode is not None:
@@ -59,6 +59,9 @@ class AudioController(object):
     
     def set_mode_new_user(self):
         self.state = self.States.NEW_USER
+    
+    def get_audio_state(self):
+        return np.expand_dims(self.buffer_to_img(), axis=0)
            
     def collect_data(self, num_samples, path, sample_episode=100):
         from ..Gwen.AISystem.preprocess import audioDataTomfcc
@@ -103,11 +106,10 @@ class AudioController(object):
     def audio_processor(self):
         from ..Gwen.AISystem.preprocess import audioDataTomfcc
         
-        
-
         while True:
-            # self.state = self.Gwen.get_state()
+            # self.state = self.Gwen.get_s tate()
             if self.state == self.States.SAMPLING:
+                # print("Hello")
                 with self.mic as source:     
                     self._audio_buffer.popleft()     
                     temp_Audio = self.r.record(source=self.mic, duration=0.125)
@@ -115,8 +117,8 @@ class AudioController(object):
                         mel_img = audioDataTomfcc(temp_Audio)
                         self._audio_buffer.append(mel_img)
                         
-                        if self._stream_window_visble:
-                            self._current_stream_img = self.buffer_to_img()
+                        # if self._stream_window_visble:
+                        #     self._current_stream_img = self.buffer_to_img()
                             
                     except sr.UnknownValueError:
                         print("Could not understand audio")
@@ -189,14 +191,14 @@ class AudioController(object):
     def buffer_to_img(self):
        return np.concatenate(list(self._audio_buffer), axis=1)
    
-    def set_stream_window(self, val:bool):
-        self._stream_window_visble = val
-        cv2.namedWindow('Audio Stream', cv2.WINDOW_NORMAL) if val else cv2.destroyAllWindows()
+    # def set_stream_window(self, val:bool):
+    #     self._stream_window_visble = val
+    #     cv2.namedWindow('Audio Stream', cv2.WINDOW_NORMAL) if val else cv2.destroyAllWindows()
         
-        if val:
-            self.img_th.start()
-        else:
-            self.img_th.join()
+        # if val:
+        #     self.img_th.start()
+        # else:
+        #     self.img_th.join()
     
     def AudioStreamWindow(self):
         while True:
@@ -205,6 +207,3 @@ class AudioController(object):
                 cv2.waitKey(500)
                 cv2.destroyAllWindows()
             t.sleep(0.25)
-    
-
-gwen = AudioController("Hey Gwen")
