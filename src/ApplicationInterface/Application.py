@@ -1,26 +1,30 @@
 import kivy
 from kivy.app import App
+from kivy.uix.widget import Widget
+from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.settings import SettingsWithNoMenu
+from kivy.core.window import Window
 
-#App Class
+Window.clearcolor = (0, 0.3, 0.6, 1)
+
 class MyApp(App):
     def build(self):
-        #Setting up layout
-        layout = BoxLayout(orientation='vertical')
-        layout.add_widget(Label(text="This is a string", font_size=20, font_name="Roboto"))
-        layout.add_widget(TextInput(text="Input Something"))
-        #Setting up SettingsWithNoMenu
-        settings = SettingsWithNoMenu()
-        # settings.add_json_panel('My Settings', self.config, '.\src\ApplicationInterface\settings.json')
-        layout.add_widget(settings)
-        #Setting up background color
-        layout.canvas.before.add(kivy.graphics.Color(0,0.5,1,1))
-        layout.canvas.add(kivy.graphics.Rectangle(size=layout.size))
-        #Returning layout
-        return layout
-#Run app
-if '' == '':
+        self.textinput = TextInput(text='', multiline=False)
+        self.button = Button(text='Submit')
+        self.button.bind(on_press=self.reaction)
+
+        self.label = Label(text='')
+
+        root_widget = Widget()
+        root_widget.add_widget(self.textinput)
+        root_widget.add_widget(self.button)
+        root_widget.add_widget(self.label)
+        return root_widget
+
+    def reaction(self, instance):
+        entered_text = self.textinput.text
+        self.label.text = 'You said: {}'.format(entered_text)
+
+if __name__=="__main__":
     MyApp().run()

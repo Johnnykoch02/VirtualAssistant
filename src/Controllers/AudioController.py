@@ -17,7 +17,7 @@ class AudioController(object):
         NEW_USER = 3
         DATA_COLLECTION = 4
 
-    def __init__(self, keyword=''):
+    def __init__(self, keyword='', stream_visible=True):
         '''Basic Audio Control'''
         self.States = AudioController.AudioStates
         self.mic = sr.Microphone()
@@ -36,11 +36,10 @@ class AudioController(object):
         self.toggle = False
         self.new_user_Wait_flag = False
         
-        
         '''Data Collection Stuff'''
         self._data_path = None
         self._step_number = 0
-        self._stream_window_visble = False
+        self._stream_window_visble = stream_visible
         self._sample_episode = 100
         
         self.audio_th.start()
@@ -107,11 +106,10 @@ class AudioController(object):
     def audio_processor(self):
         from ..Gwen.AISystem.preprocess import audioDataTomfcc
         
-        
-
         while True:
             # self.state = self.Gwen.get_s tate()
             if self.state == self.States.SAMPLING:
+                # print("Hello")
                 with self.mic as source:     
                     self._audio_buffer.popleft()     
                     temp_Audio = self.r.record(source=self.mic, duration=0.125)
@@ -209,6 +207,3 @@ class AudioController(object):
                 cv2.waitKey(500)
                 cv2.destroyAllWindows()
             t.sleep(0.25)
-    
-
-gwen = AudioController("Hey Gwen")

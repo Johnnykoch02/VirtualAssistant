@@ -68,18 +68,18 @@ def npy2mfcc(file_path, max_len=64, n_mfcc=72):
     
     return mfcc
 
-def save_data_to_array(path=Data_Path, max_len=64, n_mfcc=72):
-    labels, _, _ = get_labels(path)
+def save_data_to_array(path, max_len=64, n_mfcc=72):
+    labels, _, _ = get_labels(os.path.join(path, "Audio"))
 
     for label in labels:
         # Init mfcc vectors
         mfcc_vectors = []
 
-        wavfiles = [path + label + '/' + wavfile for wavfile in os.listdir(path + '/' + label)]
+        wavfiles = [os.path.join(path, "Audio", label, wavfile) for wavfile in os.listdir(os.path.join(path, "Audio", label))]
         for wavfile in tqdm(wavfiles, "Saving vectors of label - '{}'".format(label)):
             mfcc = wav2mfcc(wavfile, max_len=max_len, n_mfcc=n_mfcc)
             mfcc_vectors.append(mfcc)
-        np.save(label + '.npy', mfcc_vectors)
+        np.save(os.path.join(label + '.npy', mfcc_vectors))
 
 
 def get_train_test(split_ratio=0.6, random_state=42):
