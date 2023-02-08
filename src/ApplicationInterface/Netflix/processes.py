@@ -1,7 +1,7 @@
 import pickle
+import sys
+import os
 import datetime
-
-import my_secrets
 
 from selenium import webdriver
 import selenium.webdriver.chrome.options
@@ -14,8 +14,12 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException,
 
 # Setup and creation of driver Object for usage in interface.py
 def create_driver():
-    
-    driver_path = my_secrets.MY_CHROMEDRIVER_PATH
+
+    # Determine the os type to be used in the driver path
+    os_type = "windows" if sys.platform == "win32" else "linux"
+    driver_executable = "chromedriver.exe" if sys.platform == "win32" else "chromedriver"
+
+    driver_path = os.path.join(os.getcwd(), "data", "Selenium", "driver", os_type, driver_executable)
     driver_runner = webdriver.Chrome
     
     # Set's up options
@@ -40,16 +44,17 @@ def create_driver():
     return driver
 
 # Tries to bypass Netflix login with stored cookies, or log's in and stores new cookies
-def login(driver, username, password):
+def login(driver, username, password, preferred_user):
     USERNAME_FIELD = (By.CSS_SELECTOR, 'input[name="userLoginId"]')
     PASSWORD_FIELD = (By.CSS_SELECTOR, 'input[name="password"]')
     BILLBOARD_PLAY_BUTTON = (By.CSS_SELECTOR, 'div.billboard-row  a.playLink')
+    cookies_path = os.path.join(os.getcwd(), "data", "Netflix", "pickledcookies.pkl")
 
     # Try opening pickledcookies.pkl
     try:
 
         # Get stored cookies and open login page
-        with open('./pickledcookies.pkl', 'rb') as pickledcookies:
+        with open(cookies_path, 'rb') as pickledcookies:
             browser_settings = pickle.load(pickledcookies)
             driver.delete_all_cookies()
             driver.get('https://netflix.com/login')
@@ -85,13 +90,13 @@ def login(driver, username, password):
 
     # If pickledcookies.pkl does not exist, create it and raise
     except FileNotFoundError:
-        with open('./pickledcookies.pkl', 'wb') as pickledcookies:
+        with open(cookies_path, 'wb') as pickledcookies:
             browser_settings = dict()
             browser_settings['last_updated'] = datetime.date(1980,1,1)
             browser_settings['stored_cookies'] = 1234567890
             pickle.dump(browser_settings, pickledcookies)
-        print("pickledcookies.pkl did not exist. Now it does, run the program again")
-        raise SystemExit
+        print("pickledcookies.pkl did not exist, trying to create it.")
+        raise FileNotFoundError
 
     # After login, we are either in the homepage, or user selection page
     # Wait for either home button or user select header
@@ -104,7 +109,7 @@ def login(driver, username, password):
         # Try logging in to our preferred user, or first user in case of failure
         try:
             # If we cannot find this <span>, then the except statement will trigger
-            selector = "//span[text()='%s']" % my_secrets.PREFERRED_USER
+            selector = "//span[text()='%s']" % preferred_user
             span = driver.find_element(By.XPATH, selector)
 
             # This means that we can find that <span>, so lets use it to select user

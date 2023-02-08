@@ -141,6 +141,5 @@ dmypy.json
 .private/*
 
 # Netflix
-/src/ApplicationInterface/Netflix/pickledcookies.pkl
-/src/ApplicationInterface/Netflix/my_secrets.py
-/src/ApplicationInterface/Netflix/logs/(venv)
+/pickledcookies.pkl
+logs/
