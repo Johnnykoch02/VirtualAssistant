@@ -18,10 +18,6 @@ class langIncrementer:
         else:
             self.ptr = self.ptrs.VERB
 
-
-
-
-
 class CommandController(object):
     def __init__(self):
         
