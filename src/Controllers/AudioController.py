@@ -37,7 +37,7 @@ class AudioController(object):
         self.new_user_Wait_flag = False
         
         '''Data Collection Stuff'''
-        self._data_path = None
+        self._data_path = os.path.join(os.getcwd(), 'data', 'Models', 'KeywordModel', 'Training', 'Mel_Imgs', '0')
         self._step_number = 0
         self._stream_window_visble = stream_visible
         self._sample_episode = 100
@@ -89,7 +89,7 @@ class AudioController(object):
                             self._current_stream_img = audio_img
                             
                         np.save(os.path.join(path, f'{index}.npy'), arr=audio_img, allow_pickle=True)
-                        t.sleep(1.0)
+                        # t.sleep(1.0)
                     except sr.UnknownValueError:
                         print("Could not understand audio")
                     except sr.RequestError as e:
