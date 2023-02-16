@@ -8,7 +8,7 @@ import torch as th
 import torch.nn as nn
 from sklearn.preprocessing import Normalizer
 from torch.utils.data import DataLoader
-from keras.preprocessing.image import ImageDataGenerator
+# from keras.preprocessing.image import ImageDataGenerator
 
 class Dataset(th.utils.data.Dataset):
     def __init__(self, data, labels):
@@ -35,7 +35,7 @@ class KeywordAudioModel(nn.Module):
         https://arxiv.org/pdf/2005.06720v2.pdf
         The structure of the network is designed to implement the following Paper.
     '''
-    def __init__(self, input_shape=(1, 64, 72), lr=0.08, VERSION="0.01"):
+    def __init__(self, input_shape=(1, 64, 72), lr=0.008, VERSION="0.01"):
         super(KeywordAudioModel, self).__init__()
         '''3x64x48'''
         self.batch_size = 32
@@ -63,23 +63,29 @@ class KeywordAudioModel(nn.Module):
         self.Data_Path = os.path.join(os.getcwd(), "data","Models","KeywordModel","Training")
         self._LinearLayers = nn.Sequential(
             nn.Linear(1440, 900, bias=True), 
+            nn.Dropout1d(p=0.05),
             nn.LeakyReLU(),
-            nn.Linear(900, 2),
-            nn.Softmax(dim=1)
+            nn.BatchNorm1d(900),
+            nn.Linear(900, 120),
+            nn.Dropout1d(p=0.05),
+            nn.LeakyReLU(),
+            nn.BatchNorm1d(120),
+            nn.Linear(120, 2),
+            nn.Softmax()
         )
         
         self.device = 'cuda' if th.cuda.is_available() else 'cpu'
         self.to(self.device)
         
-        self._loss_func = nn.CrossEntropyLoss()
-        self._optimizer = th.optim.RMSprop(self.parameters(), lr=lr)
+        self._loss_func = nn.MSELoss()
+        self._optimizer = th.optim.AdamW(self.parameters(), lr=lr)
 
         self.num_classes = 2
         self.VERSION = VERSION   
         
         self._training_data = self.load_in_data(fit=True)
-        self.normalizer = ImageDataGenerator(featurewise_center=True, featurewise_std_normalization=True) #Issues with normalization: Need to convert for Pytorch compatability
-        self.normalizer.fit(self._training_data)
+        self.normalizer = Normalizer() #Issues with normalization: Need to convert for Pytorch compatability
+        self.normalizer.fit( np.reshape(self._training_data, (self._training_data.shape[0], 1*64*72)))
 
         
     # def _init_reccurrent(self):
@@ -100,7 +106,7 @@ class KeywordAudioModel(nn.Module):
                         break
                     img = np.load(os.path.join(self.Data_Path, "Mel_Imgs", dir, file), allow_pickle=True)
                     data.append(
-                        [np.array(self.normalizer.standardize([img])), int(dir)]
+                        [self.normalize(np.array([img])), int(dir)]
                     )
             data = np.array(data)
             return DataLoader(Dataset(data[:,0], data[:,1]), batch_size=self.batch_size, shuffle=True)
@@ -114,9 +120,20 @@ class KeywordAudioModel(nn.Module):
             return np.array(data)
     
     def predict(self, x):
-        x = th.from_numpy(self.normalizer.standardize(x)).to(self.device)
+        x = th.from_numpy(self.normalize(x)).to(self.device)
         return th.argmax(self.forward(x)).item()
-        
+    
+    @staticmethod
+    def Load_Model(model_path):
+        model = KeywordAudioModel()
+        model.load_state_dict(th.load(model_path))
+        return model
+    
+    def normalize(self, x):
+        original_shape = x.shape
+        num_samples = original_shape[0]
+        return np.reshape(self.normalizer.transform( np.reshape(x, newshape=(num_samples, 1*64*72))),  newshape=original_shape  )
+
     
     def train(self, num_epochs, data_loader: DataLoader, save_location=None):
         from torch.autograd import Variable
