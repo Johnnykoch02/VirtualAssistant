@@ -5,7 +5,7 @@ import time as t
 
 def main():
     from src.utils import convert_path_to_wav
-    from src.Gwen.APIHandlers.SpotifyAPI.load_cookies import Spotify
+    from src.Gwen.APIHandlers.SpotifyAPI.spotify_api import Spotify
     # convert_path_to_wav("C:\\Users\\John\\Documents\\Sound recordings", 'w4a', 'data/Models/SpeechModel/Training/0/')
     # from src.Controllers import AudioController
     
