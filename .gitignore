@@ -139,3 +139,7 @@ dmypy.json
 .pyre/
 
 .private/*
+
+# Netflix
+/pickledcookies.pkl
+logs/
