@@ -1,11 +1,17 @@
 import speech_recognition as sr
+import pyaudio
+from pydub import AudioSegment
 import threading as th
 from enum import Enum
 from collections import deque
 import numpy as np
 import os
 import time as t
-import cv2
+from src.Gwen.AISystem.Networks import KeywordAudioModel
+import torch as torch
+from src.utils import get_mel_image_from_float_normalized, normalize_mfcc
+
+# import cv2
 
 
 class AudioController(object):
@@ -20,31 +26,59 @@ class AudioController(object):
     def __init__(self, keyword='', stream_visible=True):
         '''Basic Audio Control'''
         self.States = AudioController.AudioStates
-        self.mic = sr.Microphone()
+        self.mic = pyaudio.PyAudio()
         self.audio_th = th.Thread(target=self.audio_processor)
         self.img_th = th.Thread(target= self.AudioStreamWindow)
         self.r = sr.Recognizer()
         
         self.keyword = keyword
         self.state = self.States.SAMPLING
-        self._audio_buffer = deque()
-        for _ in range(16):
-            self._audio_buffer.append(np.zeros(shape=(72,4)))
+        self._audio_buffer = deque() 
+        self.n_mfcc = 28
+        self.max_len = 40
+        self.__audio_buffer_lock = th.Lock()
+        with self.__audio_buffer_lock :
+            for _ in range(4):
+                self._audio_buffer.append(np.zeros(shape=(self.n_mfcc, self.max_len), dtype=np.float32))
         self._current_stream_img = self.buffer_to_img()
+        self._prediction_model = KeywordAudioModel.Load_Model(os.path.join(os.getcwd(), 'data', 'Models', 'KeywordModel', 'Training', 'Checkpoints', 'KeywordCheckpoint_1000.zip'))
         
         '''New User Stuff'''
         self.toggle = False
         self.new_user_Wait_flag = False
         
         '''Data Collection Stuff'''
-        self._data_path = os.path.join(os.getcwd(), 'data', 'Models', 'KeywordModel', 'Training', 'Mel_Imgs', '0')
+        self._data_path = os.path.join(os.getcwd(), 'data', 'Models', 'KeywordModel', 'Training', 'Sequences', 'Audio')
         self._step_number = 0
         self._stream_window_visble = stream_visible
         self._sample_episode = 100
         
         self.audio_th.start()
+        self.audio_stream = self.record_audio()
     
-    def set_mode_collect_data (self, num_steps, path, sample_episode=None):
+    def record_audio(self):
+        audio_format = pyaudio.paInt16
+        num_channels = 1
+        sample_rate = 48000
+        duration = 0.25        
+        frame_length = int(sample_rate*duration)
+
+        def __audio_stream_callback__(in_data, a, b, c):
+            audio_data = np.frombuffer(in_data, dtype=np.int16)
+            audio_data_np = np.frombuffer(audio_data.tobytes(), dtype=np.int16).astype(np.float32)
+            audio_data_np /= np.iinfo(np.int16).max # Norm the stream data
+            with self.__audio_buffer_lock: # Using this buffer lock ensures that we do not read from a different thread
+                self._audio_buffer.popleft()
+                mel_img = get_mel_image_from_float_normalized(audio_data_np, sound_rate=sample_rate)
+                self._audio_buffer.append(mel_img)
+            return (in_data, pyaudio.paContinue)
+
+        # Open stream on our microphone
+        stream = self.mic.open(format=audio_format,channels=num_channels, rate=sample_rate, input=True, frames_per_buffer=frame_length, stream_callback=__audio_stream_callback__)
+        stream.start_stream()
+        return stream
+        
+    def set_mode_collect_data(self, num_steps, path, sample_episode=None):
         self._data_path = path
         self._step_number = num_steps
         if sample_episode is not None:
@@ -61,9 +95,55 @@ class AudioController(object):
         self.state = self.States.NEW_USER
     
     def get_audio_state(self):
-        return np.expand_dims(self.buffer_to_img(), axis=0)
-           
-    def collect_data(self, num_samples, path, sample_episode=100):
+        return self.buffer_to_img()
+    
+    def collect_data(self, num_samples, path, sequence=False, sample_episode=100):
+        if sequence:
+            self.collect_data_sequence(num_samples, path, sample_episode=sample_episode)
+        else:
+            self.collect_data_simple(num_samples, path, sample_episode=sample_episode)
+    
+    def collect_data_sequence(self, num_samples, path, sample_episode=100, time_low=2, time_high=20):
+        print('While collecting data, you will be prompted to provide audio. When prompted, make sure to respond promptly.\nThis will ensure proper data collection.')
+        continuous = num_samples == -1
+        
+        if continuous:
+            num_samples = sample_episode
+            
+        if self._sample_episode != 100:
+            self._sample_episode = 100
+        for _ in range(num_samples):
+            with self.mic as source:  
+                index = len(os.listdir(path))
+                record_time = np.random.randint(low=time_low, high=time_high)
+                try:  
+                    print('Recording for ' + str(record_time) + ' seconds...')  
+                    t.sleep(1.0)
+                    print('--- START ---')
+                    print('...Collecting...')
+                        
+                    audio = self.r.record(source=self.mic, duration=record_time)
+                    
+                    print('--- Finished Recording Sample ---')
+                    with open(os.path.join(path, f'{index}.wav'), 'wb') as f:
+                        f.write(audio.get_wav_data())
+                    print('--- Finished Saving Sample (\..Enter to Continue../) ---')
+                    input()
+                        # t.sleep(1.0)
+                except sr.UnknownValueError:
+                        print("Could not understand audio")
+                except sr.RequestError as e:
+                        print("Could not request results; {0}".format(e))
+            
+        if continuous:
+            if input("Enter \'n\' to break...") == 'n':
+                self.state = self.States.SAMPLING
+                return
+            self.collect_data_sequence(-1, path, sample_episode)
+            
+        self.set_mode_sample()
+        
+    def collect_data_simple(self, num_samples, path, sample_episode=100):
         from ..Gwen.AISystem.preprocess import audioDataTomfcc
         print('While collecting data, you will be prompted to provide audio. When prompted, make sure to respond promptly.\nThis will ensure proper data collection.')
         continuous = num_samples == -1
@@ -81,8 +161,8 @@ class AudioController(object):
                         print('--- START ---')
                         print('...Collecting...')
                         for _ in range(16):  
-                            temp_buffer.append(self.r.record(source=self.mic, duration=0.125))
-                        temp_buffer = map(audioDataTomfcc, temp_buffer)
+                            temp_buffer.append(self.r.record(source=self.mic, duration=0.25).frame_data)
+                        
                         print('--- Finished Sample ---')
                         audio_img = np.concatenate(list(temp_buffer), axis=1)
                         if self._stream_window_visble:
@@ -102,31 +182,45 @@ class AudioController(object):
             self.collect_data(-1, path, sample_episode)
             
         self.set_mode_sample()
-  
+    def get_prediction(self,):
+        img = self.buffer_to_img()
+        while len(img.shape) < 5:
+            img = np.expand_dims(img, axis=0)
+        # print(img, img.shape)
+        try:
+            return self._prediction_model.predict(torch.tensor(img, device=self._prediction_model.device))
+        except:
+            return None
     def audio_processor(self):
-        from ..Gwen.AISystem.preprocess import audioDataTomfcc
         
         while True:
-            # self.state = self.Gwen.get_s tate()
+            t.sleep(0.1)
+            # self.state = self.Gwen.get_state()
             if self.state == self.States.SAMPLING:
-                # print("Hello")
-                with self.mic as source:     
-                    self._audio_buffer.popleft()     
-                    temp_Audio = self.r.record(source=self.mic, duration=0.125)
-                    try:
-                        mel_img = audioDataTomfcc(temp_Audio)
-                        self._audio_buffer.append(mel_img)
+                pass
+            #     # print("Hello")
+            #     with self.mic as source:     
+            #         self._audio_buffer.popleft()     
+            #         temp_Audio = self.r.record(source=self.mic, duration=0.25)
+            #         try:
+            #             audio_bytes = temp_Audio.frame_data
+
+            #             # Convert raw bytes to an AudioSegment
+            #             audio_segment = AudioSegment.from_raw(audio_bytes, sample_width=temp_Audio.sample_width,
+            #                           frame_rate=temp_Audio.sample_rate, channels=temp_Audio.channels)
+            #             mel_img = get_mel_image_from_float_normalized(audio_segment, sound_rate=temp_Audio.sample_rate)
+            #             self._audio_buffer.append(mel_img)
                         
-                        # if self._stream_window_visble:
-                        #     self._current_stream_img = self.buffer_to_img()
+            #             # if self._stream_window_visble:
+            #             #     self._current_stream_img = self.buffer_to_img()
                             
-                    except sr.UnknownValueError:
-                        print("Could not understand audio")
-                    except sr.RequestError as e:
-                          print("Could not request results; {0}".format(e))
+            #         except sr.UnknownValueError:
+            #             print("Could not understand audio")
+            #         except sr.RequestError as e:
+            #               print("Could not request results; {0}".format(e))
                           
             elif self.state == self.States.DATA_COLLECTION:             
-                self.collect_data(self._step_number, self._data_path, self._sample_episode)
+                self.collect_data(self._step_number, self._data_path, True, self._sample_episode)
             
             elif self.state == self.States.ENGAGED:
                 with self.mic as source:
@@ -157,16 +251,6 @@ class AudioController(object):
                 except sr.RequestError as e:
                           print("Could not request results; {0}".format(e))
 
-    # def wait_for_flag(self):
-    #     if (self.new_user_Wait_flag):
-    #         return
-    #     else:
-    #         t.sleep(0.05)
-    #         self.wait_for_flag()
-    
-    def get_raw_audio_request(self):
-        pass
-
     def read(self):
         if len(self.msg) > 0:
             return self.msg[0]
@@ -189,7 +273,8 @@ class AudioController(object):
         return wave, sr
 
     def buffer_to_img(self):
-       return np.concatenate(list(self._audio_buffer), axis=1)
+        with self.__audio_buffer_lock:
+           return normalize_mfcc(np.vstack(np.array(self._audio_buffer).copy()))
    
     # def set_stream_window(self, val:bool):
     #     self._stream_window_visble = val
@@ -203,7 +288,8 @@ class AudioController(object):
     def AudioStreamWindow(self):
         while True:
             if self._stream_window_visble:
-                cv2.imshow('Audio Stream', self._current_stream_img)
-                cv2.waitKey(500)
-                cv2.destroyAllWindows()
+                pass
+                # cv2.imshow('Audio Stream', self._current_stream_img)
+                # cv2.waitKey(500)
+                # cv2.destroyAllWindows()
             t.sleep(0.25)

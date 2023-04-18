@@ -78,6 +78,11 @@ instance/
 *.npy
 *.npz
 
+# Model Data
+*Model*.zip
+*Checkpoint*.zip
+*Epoch*.zip
+
 # Sphinx documentation
 docs/_build/
 

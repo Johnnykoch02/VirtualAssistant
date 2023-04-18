@@ -1,4 +1,3 @@
-
 import librosa
 import os
 from sklearn.model_selection import train_test_split
@@ -19,12 +18,22 @@ def get_labels(path=Data_Path):
     label_indices = np.arange(0, len(labels))
     return labels, label_indices, to_categorical(label_indices)
 
+def get_mel_image_from_int32(audio_32, max_len=40, n_mfcc=28):
+    audio = audio_32.astype(np.float32, order='C') / 32768.0
+    # wave = audio[::3]
+    mfcc = librosa.feature.mfcc(y=audio, sr=48000, n_mfcc=n_mfcc)
+    if (max_len > mfcc.shape[1]):
+        pad_width = max_len - mfcc.shape[1]
+        mfcc = np.pad(mfcc, pad_width=((0, 0), (0, pad_width)), mode='constant')
+    else:
+        mfcc = mfcc[:, :max_len]
+    return mfcc
 
 # convert file to wav2mfcc
 # Mel-frequency cepstral coefficients
 def audioDataTomfcc(sound, max_len=64, n_mfcc=72):
     byte_data, sr, sw = sound.get_wav_data(), sound.sample_rate, sound.sample_width
-    data_s16 = np.frombuffer(byte_data, dtype=np.int16, count=len(byte_data)//2, offset=0)
+    data_s16 = np.frombuffer(byte_data, dtype=np.int32, count=len(byte_data)//2, offset=0)
     float_data = data_s16 * 0.5**15 
     wave = float_data[::3]
     mfcc = librosa.feature.mfcc(y=wave, sr=sr, n_mfcc=n_mfcc)
