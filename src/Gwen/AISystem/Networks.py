@@ -68,6 +68,7 @@ class KeywordAudioModel(nn.Module):
     def Load_Model(model_path):
         model = KeywordAudioModel()
         model.load_state_dict(th.load(model_path))
+        model.eval()
         return model
     
     def save_checkpoint(self, file=None):
