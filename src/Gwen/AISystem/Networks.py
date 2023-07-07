@@ -62,7 +62,9 @@ class KeywordAudioModel(nn.Module):
         return x
     
     def predict(self, x):
-        return self.forward(x).argmax(dim=2).detach().cpu().numpy()
+        pred = self.forward(x).detach().cpu().float().squeeze(0).numpy()
+        return pred[1] > 0.7 and pred.argmax(dim=1) == 1 # Test this 
+        
     
     @staticmethod
     def Load_Model(model_path):

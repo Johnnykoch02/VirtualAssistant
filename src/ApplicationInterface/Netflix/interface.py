@@ -1,7 +1,7 @@
 # This file contains the Netflix class used in main.py
 
 # import processes
-import src.ApplicationInterface.Netflix.my_secrets as my_secrets
+# import src.ApplicationInterface.Netflix.my_secrets as my_secrets
 # import json
 import os
 import src.ApplicationInterface.Netflix.processes as processes

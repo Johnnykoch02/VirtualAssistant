@@ -1,10 +1,5 @@
 import os
 import sys
-import numpy as np
-from kivy.app import App
-from kivy.uix.boxlayout import BoxLayout
-from kivy.properties import NumericProperty
-from kivy.clock import Clock
 import time as t
 
 def main():
@@ -18,7 +13,7 @@ def main():
     aud_cntrl = AudioController.AudioController()
     # aud_cntrl.set_stream_window(True)
     aud_cntrl.set_mode_sample()
-    # aud_cntrl.set_mode_collect_data(100, os.path.join(os.getcwd(), 'data', 'Models', 'KeywordModel', 'Training',  'Sequences', 'Audio'), None)
+    aud_cntrl.set_mode_collect_data(100, os.path.join(os.getcwd(), 'data', 'Models', 'KeywordModel', 'Training',  'Sequences', 'Audio'), None)
     # from src.Gwen.AISystem.Networks import KeywordAudioModel
     # model = KeywordAudioModel(VERSION="0.02")
     # model.train(1000, model.load_in_data())

@@ -1,0 +1,6 @@
+{
+    "model_path": "data/Models/KeywordModel/Training/Checkpoints/KeywordCheckpoint_1000.zip",
+    "data_output_path": "data/Models/KeywordModel/Training/Sequences/Audio",
+    "n_mfcc": 28,
+    "max_len": 40
+}
