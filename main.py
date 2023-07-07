@@ -32,16 +32,27 @@ def main():
     # while True:
     #     t.sleep(1.0)
 
-    # from src.ApplicationInterface.Netflix.interface import Netflix
-
+    from src.ApplicationInterface.Netflix.interface import Netflix
+    from src.ApplicationInterface.Youtube.YoutubePlayer import YouTube
     # n = Netflix()
-    # n.watch("breaking bad")
+    # n.watch("bojack horseman")
 
-    # t.sleep(10)
+    # t.sleep(100)
 
     # n.quit()
+    
+# if __name__ == '__main__':
+#     main()
+
+   # Assuming the class name is 'YouTube'
+
+
+    y = YouTube()
+    y.play("Down on skidrow","muckraker")  # Adjust based on actual method names and parameters
+
+    t.sleep(1000)
+
+    y.quit()
 
 if __name__ == '__main__':
     main()
-
- 
