@@ -19,6 +19,7 @@ class YouTube:
 
         self.driver = webdriver.Chrome(options=self.chrome_options)
     def play(self, search_query:str) -> None:
+        search_query = search_query.replace(" ", "+") 
         self.driver.get(f'https://youtube.com/search?q={search_query}&sp=EgIQAQ%253D%253D')
 
         # You can use the WebDriverWait to wait until the element is found or a timeout occurs
