@@ -16,8 +16,13 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException,
 def create_driver():
 
     # Determine the os type to be used in the driver path
-    os_type = "windows" if sys.platform == "win32" else "linux"
+    # os_type = "windows" if sys.platform == "win32" else "linux"
+    # driver_executable = "chromedriver.exe" if sys.platform == "win32" else "chromedriver"
+
+    os_type = "windows" if sys.platform == "win32" else "mac" if sys.platform == "darwin" else "linux"
     driver_executable = "chromedriver.exe" if sys.platform == "win32" else "chromedriver"
+
+
 
     driver_path = os.path.join(os.getcwd(), "data", "Selenium", "driver", os_type, driver_executable)
     driver_runner = webdriver.Chrome
@@ -30,13 +35,18 @@ def create_driver():
     current_options.add_argument("--disable-notifications")
 
     # Creates the driver Object to be used in interface.py
+    # try:
+    #     driver = driver_runner(
+    #         executable_path = driver_path,
+    #         options = current_options
+    #     )
     try:
-        driver = driver_runner(
-            executable_path = driver_path,
+        driver = webdriver.Chrome(
+            # executable_path = driver_path,
             options = current_options
         )
-    except (AttributeError, TypeError) as error:
-        print("Error during driver creation")
+    except Exception as e:  # Catch any exception
+        print(f"Error during driver creation: {e}")  # Print the error message
         raise SystemExit
 
     driver.maximize_window()
@@ -103,8 +113,19 @@ def login(driver, username, password, preferred_user):
     wait = WebDriverWait(driver, 10)
     HOME_BUTTON = (By.CSS_SELECTOR, 'a[aria-label="Netflix"]')
     wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, 'h1.profile-gate-label , a[aria-label="Netflix"]')))
+
     
-    if driver.find_element(By.CSS_SELECTOR, 'h1.profile-gate-label'):
+    def safe_find_element(driver, by, value):
+        try:
+            return driver.find_element(by, value)
+        except NoSuchElementException:
+            return None
+        
+
+
+    element = safe_find_element(driver, By.CSS_SELECTOR, 'h1.profile-gate-label')
+    if element:
+    # if driver.find_element(By.CSS_SELECTOR, 'h1.profile-gate-label'):
 
         # Try logging in to our preferred user, or first user in case of failure
         try:

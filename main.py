@@ -5,8 +5,8 @@ import time as t
 
 def main():
 
-    from src.utils import convert_path_to_wav
-    from src.Gwen.APIHandlers.SpotifyAPI.load_cookies import Spotify
+    # from src.utils import convert_path_to_wav
+    # from src.Gwen.APIHandlers.SpotifyAPI.load_cookies import Spotify
     # convert_path_to_wav("C:\\Users\\John\\Documents\\Sound recordings", 'w4a', 'data/Models/SpeechModel/Training/0/')
     # from src.Controllers import AudioController
 
@@ -28,15 +28,31 @@ def main():
     #     t.sleep(1.0)
 
     from src.ApplicationInterface.Netflix.interface import Netflix
+    from src.ApplicationInterface.Youtube.YoutubePlayer import YouTube
+    # n = Netflix()
+    # n.watch("bojack horseman")
 
-    n = Netflix()
-    n.watch("breaking bad")
+    # t.sleep(100)
+
+    # n.quit()
+    
+# if __name__ == '__main__':
+#     main()
+
+   # Assuming the class name is 'YouTube'
+
+
+    y = YouTube()
+    y.play("Tony+Ferguson")  # Adjust based on actual method names and parameters
 
     t.sleep(10)
 
-    n.quit()
-    
+    y.quit()
+
 if __name__ == '__main__':
     main()
 
- 
+    
+
+
+    
