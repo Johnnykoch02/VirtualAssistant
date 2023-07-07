@@ -1,14 +1,6 @@
 # https://huggingface.co/
 
 
-import os
-import openai
-import time as t
-import re
-
-# openai.api_key = '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'
-openai.api_key = os.getenv("OPENAI_API_KEY")
-
 
 class Brain:
     ''' 
