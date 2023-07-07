@@ -114,7 +114,17 @@ def SpliceAudioData(file_name, sampleSize):
     return allSegments
 
 def GetAudioSplice(audioData, dataSamplesPerSplice, index):
-    return audioData[index * dataSamplesPerSplice : (index + 1) * dataSamplesPerSplice]          
+    return audioData[index * dataSamplesPerSplice : (index + 1) * dataSamplesPerSplice] 
+
+def extract_json(s: str):
+    try:
+        start = s.index('{')
+        end = s.rindex('}') + 1  # rindex gets the last occurrence
+        json_str = s[start:end]
+        data = json.loads(json_str)
+        return data
+    except ValueError as e:
+        raise Exception("Could Not find JSON in string.")
     
    
 # print(convert_path_to_JSON(os.path.join('.','configurationState.JSON'), 'Spotify_Client_ID'))

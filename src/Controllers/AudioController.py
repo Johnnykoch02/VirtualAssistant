@@ -111,9 +111,9 @@ class AudioController(object):
                     self.r.adjust_for_ambient_noise(source=source, duration=0.2)                                                             
                     try:
                         temp_Audio = self.r.listen(source) 
-                        response = openai.Audio.transcribe("whisper-1",temp_Audio.get_wav_data())
+                        response = openai.Audio.transcribe("whisper-1",temp_Audio.get_wav_data())["text"]
                         self.state.transition()
-                        # self.GwenInstance. Do something with response["text"]
+                        self.GwenInstance.
                     except sr.UnknownValueError as e:
                         print("Could not understand audio")
                         self.state.transition(AudioController.State.Mode.LISTENING)
@@ -122,7 +122,8 @@ class AudioController(object):
                         self.state.transition(AudioController.State.Mode.LISTENING)
                         
         elif self.state() == AudioController.State.Mode.TEMP:
-            pass
+            if is_main_context:
+                self.state.transition() # Asssuming Context took care of the rest.
         
         elif self.state() == AudioController.State.Mode.DATA_COLLETION:
             self.state.transition(0) # Asssuming Context took care of the rest.
