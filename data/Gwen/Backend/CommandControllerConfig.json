@@ -1,0 +1,6 @@
+{
+    "prompt_path": "data/Gwen/Metadata/GPT_Prompt.md",
+    "context": "$$CURRENT_CONTEXT$$",
+    "command": "$$COMMAND_STRING$$",
+    "bad_data_prompt": "The following data failed to execute on the backend. Please inform the user why this may have happened using Gwen.speech_output."
+}
