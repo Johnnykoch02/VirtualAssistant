@@ -43,7 +43,7 @@ def main():
 
 
     y = YouTube()
-    y.play("Tony Ferguson")  # Adjust based on actual method names and parameters
+    y.play("Down on skidrow","muckraker")  # Adjust based on actual method names and parameters
 
     t.sleep(1000)
 

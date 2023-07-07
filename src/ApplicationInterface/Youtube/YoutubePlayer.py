@@ -18,8 +18,12 @@ class YouTube:
         self.chrome_options.add_argument("--disable-notifications")
 
         self.driver = webdriver.Chrome(options=self.chrome_options)
-    def play(self, search_query:str) -> None:
+    def play(self, search_query:str, channel_name:str = None) -> None:
         search_query = search_query.replace(" ", "+") 
+
+        if channel_name is not None:
+            search_query += f"+channel:{channel_name.replace(' ', '+')}"
+            
         self.driver.get(f'https://youtube.com/search?q={search_query}&sp=EgIQAQ%253D%253D')
 
         # You can use the WebDriverWait to wait until the element is found or a timeout occurs
