@@ -19,6 +19,7 @@ class CommandController(object):
             "Netflix": GwenInstance.NetflixContext,
             "Spotify": GwenInstance.SpotifyContext,
             "YouTube": GwenInstance.YouTubeContext,
+            "Gwen": GwenInstance.GwenContext
             # TODO: Finish adding these class references. (aka. finish backend api stuff)
         }
         
@@ -39,13 +40,14 @@ class CommandController(object):
                 # Pull Context Class and Execute function.
                 cmd_kwargs = {key: value for key, value in backend_cmd.items() if key != "target"}
                 cmd_kwargs["func"] = func
-                context = self.ContextReferences[context_class](backend_cmd,)
+                context = self.ContextReferences[context_class](backend_cmd,) 
                 if context.validate_exec(cmd_kwargs):
                     context.exec(cmd_kwargs) # Execute the context.
                     s = True
                     self.GwenInstance.add_context(context) # Add the current context to the GwenInstance.
             except Exception as e:
-                pass
+                print(f'Error while processing Request {command}: {e}')
+                continue
             # Rerun the command if except, this means the target is not found, or the parameters were invalid.
             if s:
                 break

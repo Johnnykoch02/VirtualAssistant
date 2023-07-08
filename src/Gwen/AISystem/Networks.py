@@ -54,7 +54,7 @@ class KeywordAudioModel(nn.Module):
         self.num_classes = 2
         self.VERSION = VERSION   
         
-    def forward(self, x, hidden=None):
+    def forward(self, x, hidden=None): # TODO: Fix this and Implement Hidden State :3
         batch_size, num_timesteps, c, h, w = x.size()
         x = self._ConvolutionalLayers(x.view(batch_size*num_timesteps, c, h, w))
         x, _ = self.lstm(x.view(batch_size, num_timesteps, -1))

@@ -1,5 +1,6 @@
 import selenium
 import sys
+import time as t
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -15,6 +16,8 @@ class YouTube:
         self.chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
         self.chrome_options.add_argument("--disable-notifications")
         self.driver = self.create_driver()
+        
+        self._prev_is_main_context = True
     # Setup and creation of driver Object for usage in interface.py
     def create_driver(self,):
 
@@ -64,7 +67,18 @@ class YouTube:
             self.driver.get(href)  
         except:
             print("Element not found or timeout.")
-
+            
+    def run(self, data, is_main_context =False):
+        if not is_main_context and self._prev_is_main_context:
+            # Context Switch, pause content and resume once its re-opened.
+            pass
+        elif is_main_context and not self._prev_is_main_context:
+            # Resume content from previous point.
+            pass
+        
+        t.sleep(0.1) # Add Sleep for Threading
+        self._prev_is_main_context = is_main_context
+        
     def quit(self):
         self.driver.quit()  # Don't forget to quit!
 

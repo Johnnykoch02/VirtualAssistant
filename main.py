@@ -12,35 +12,9 @@ def main():
 
     while True:
         Gwen.Gwen().run_context()
+        t.sleep(0.08) # 
     #     print('KeyWord Detection:', aud_cntrl.get_prediction())
     #     t.sleep(0.2)
-        
-
-    
-    # aud_cntrl = AudioController.AudioController()
-    # aud_cntrl.set_stream_window(True)
-    # # aud_cntrl.set_mode_collect_data(10, os.path.join(os.getcwd(), 'data', 'Models', 'KeywordModel', 'Training', 'Mel_Imgs', '0'), None)
-    # while True:
-    #     t.sleep(1.0)
-    # n = Netflix()
-    # n.watch("bojack horseman")
-
-    # t.sleep(100)
-
-    # n.quit()
-    
-# if __name__ == '__main__':
-#     main()
-
-   # Assuming the class name is 'YouTube'
-
-
-    # y = YouTube()
-    # y.play("Down on skidrow","muckraker")  # Adjust based on actual method names and parameters
-
-    # t.sleep(1000)
-
-    # y.quit()
 
 if __name__ == '__main__':
     main()

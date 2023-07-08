@@ -2,6 +2,7 @@ from enum import Enum
 
 import os
 import time as t
+import threading as thr
 import re
 from collections import deque
 
@@ -24,15 +25,21 @@ class Gwen:
         def __init__(self, obj, data):
             self.obj = obj # Maybe needs some sort of Target Data ??? Well see
             self.data = data
+            self._exec_thr = None
+            self._run_thr = None
             
         def exec(self, kwargs):
-            return self.obj.exec(self.data) # TODO: Actually implement this
+            # Demo of how to Execute a Context
+            self._exec_thr = thr.Thread(target=self.obj.exec, args=(self.data), daemon=True)
+            self._exec_thr.start()
+            self._exec_thr.join()
+            return self.obj.exec(self.data)
         
         def run(self, is_main_context =False) -> None:
             self.obj.run(self.data, is_main_context) # TODO: Actually implement this
         
         def quit(self,) -> None:
-            self.obj.quit(self.data) # TODO: Actually implement this
+            self.obj.quit() # TODO: Actually implement this
 
         def validate_exec(self, kwargs) -> bool:
             pass
@@ -51,7 +58,7 @@ class Gwen:
             return super().run(is_main_context)
         
         def quit(self,) -> None:
-            self.obj.quit(self.data)
+            self.obj.quit()
         
     class SpotifyContext(Context):
         def __init__(self, data):
@@ -113,7 +120,8 @@ class Gwen:
             super(Gwen.GwenContext, self).__init__(Gwen.Gwen(), data)
         
         def run(self, is_main_context=False) -> None:
-            super().run(is_main_context)
+            if not 'clear_context' in self.data['target']:
+                super().run(is_main_context)
 
         def quit(self,) -> None:
             # self.obj.quit()
@@ -181,7 +189,8 @@ class Gwen:
         self._Contexts.appendleft(context)
     
     def run_context(self,) -> None:
-        [self._current_context.run(is_main_context = self._current_context == context) for context in self._Contexts] #TODO: Actually implement this
+        current_context = self._current_context
+        [context.run(is_main_context = current_context == context) for context in list(self._Contexts)]
     
     def end_context(self, context) -> None:
         context.quit()
@@ -194,7 +203,7 @@ class Gwen:
         """
         Clears the Current Context of Gwen.
         """
-        [context.quit() for context in self._Contexts]
+        [context.quit() for context in list(self._Contexts)]
         self._current_context = self.PassiveContext("")
         self._Contexts = deque([self._current_context])
         

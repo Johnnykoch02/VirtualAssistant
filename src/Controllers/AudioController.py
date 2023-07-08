@@ -41,10 +41,8 @@ class AudioController(object):
         print('Initializing Audio Controller...')
         self.GwenInstance = GwenInstance
         self.mic = pyaudio.PyAudio()
-        # self._audio_th = th.Thread(target=self.audio_processor)
-        # self.img_th = th.Thread(target= self.AudioStreamWindow)
         self.r = sr.Recognizer()
-        self._audio_buffer = deque() 
+        self._audio_buffer = None
         
         self.state = AudioController.State()
         
@@ -54,20 +52,22 @@ class AudioController(object):
         self.max_len = self._config["max_len"]
         
         self.__audio_buffer_lock = th.Lock()
-        with self.__audio_buffer_lock :
-            for _ in range(4):
-                self._audio_buffer.append(np.zeros(shape=(self.n_mfcc, self.max_len), dtype=np.float32)) 
+        self.reset_audio_buffer()
                 
         self._current_stream_img = self.buffer_to_img()    
         self._prediction_model = KeywordAudioModel.Load_Model(os.path.join(os.getcwd(), self._config["model_path"]))
         self._data_output_path = os.path.join(os.getcwd(), self._config["data_output_path"])
         
-        self._stream = self.record_audio()
+        self._stream = None
+        self.listen_for_keyword()
         
         
     def buffer_to_img(self):
         with self.__audio_buffer_lock:
            return normalize_mfcc(np.vstack(np.array(self._audio_buffer).copy()))
+       
+    def listen_for_keyword(self):
+        self._stream = self.record_audio()
        
     def record_audio(self) -> pyaudio.Stream:
         """
@@ -101,7 +101,7 @@ class AudioController(object):
             # Run Prediction on the Current Audio Stream 
             prediction = self.get_prediction()
             if prediction: # Stop the stream and Transition to Command Parsing
-                print("Engaged Gwen System.")
+                print('Keyword detected...')
                 with self.__audio_buffer_lock: # Using this buffer lock ensures that we do not read from a different thread
                     self._stream.stop_stream()
                     self._stream.close()
@@ -113,15 +113,17 @@ class AudioController(object):
             source = sr.Microphone()
             tmp_path = os.path.join(os.getcwd(), "tmp", "data", "sound", "temp_audio.wav")
             with source as source:
-                    self.r.adjust_for_ambient_noise(source=source, duration=2.0)                                                             
+                    self.r.adjust_for_ambient_noise(source=source, duration=1.5)                                                             
                     try:
+                        print('Engaged Gwen System...')
                         temp_audio = self.r.listen(source) 
                         with open(tmp_path, 'wb') as tmp: # Create Temp Audio File for Whisper API
                             tmp.write(temp_audio.get_wav_data())
                         # Open and make API Call
                         with open(tmp_path, 'rb') as audio_file:
                             response = openai.Audio.transcribe("whisper-1", audio_file) ["text"]
-                        self.state.transition()
+                        self.state.transition(AudioController.State.Mode.TEMP)
+                        print('Processing Response...')
                         self.GwenInstance.execute_command(response)
                     except sr.UnknownValueError as e:
                         print("Could not understand audio")
@@ -132,17 +134,27 @@ class AudioController(object):
                     finally:
                         os.remove(tmp_path)
         elif self.state() == AudioController.State.Mode.TEMP:
-            if is_main_context:
-                self.state.transition() # Asssuming Context took care of the rest.
+            self.reset_audio_buffer()
+            self.listen_for_keyword()
+            self.state.transition(AudioController.State.Mode.LISTENING) # Asssuming Context took care of the rest.
         
         elif self.state() == AudioController.State.Mode.DATA_COLLETION:
-            self.state.transition(0) # Asssuming Context took care of the rest.
+            if not is_main_context: # TODO: Implement Viable Data Collection solution for Contexts.
+                self.state.transition(AudioController.State.Mode.LISTENING) # Asssuming Context took care of the rest.
         
         elif self.state() == AudioController.State.Mode.TRAP:
             '''Bad state :( hope I don't end up here '''
         
+        t.sleep(0.05)
+        
     def transition_mode(self, mode=-1):
         self.state.transition(mode)
+    
+    def reset_audio_buffer(self):
+        self._audio_buffer = deque() 
+        with self.__audio_buffer_lock :
+            for _ in range(4):
+                self._audio_buffer.append(np.zeros(shape=(self.n_mfcc, self.max_len), dtype=np.float32)) 
             
     def get_prediction(self,):
         img = self.buffer_to_img()
@@ -156,12 +168,15 @@ class AudioController(object):
         
         
     def exec(self, data):
-        if data['target'] == 'DataCollection':
+        if data['func'] == 'DataCollection':
             self.state.transition(AudioController.State.Mode.DATA_COLLETION)
             self.collect_data_sequence(num_samples=data['num_samples'], path=self._data_output_path)
-        elif data['target'] == '':
+        elif data['func'] == '':
             pass # Add more Cases eventually.
-        
+    
+    def quit(self,): # Ignore call to quit.
+        pass
+    
     # --- Data Collection API --- #
     def collect_data_sequence(self, num_samples, path, sample_episode=100, time_low=5, time_high=20):
         print('While collecting data, you will be prompted to provide audio. When prompted, make sure to respond promptly.\nThis will ensure proper data collection.')
