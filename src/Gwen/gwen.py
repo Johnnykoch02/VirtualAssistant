@@ -119,8 +119,8 @@ class Gwen:
         def __init__(self, data):
             super(Gwen.GwenContext, self).__init__(Gwen.Gwen(), data)
         
-        def run(self, is_main_context=False) -> None:
-            if not 'clear_context' in self.data['target']:
+        def run(self, is_main_context=False) -> None: # TODO: Actually implement this
+            if not 'clear_context' in self.data['target'] and not 'output_speech' in self.data['target']:
                 super().run(is_main_context)
 
         def quit(self,) -> None:
@@ -129,7 +129,7 @@ class Gwen:
         
         def exec(self, kwargs):
             if kwargs['func'] == "output_speech":
-                pass
+                self.obj.speech_output(kwargs['text'])
             elif kwargs['func'] == "clear_context":
                 self.obj.clear_context()
             elif kwargs['func'] == "collect_keyword_data":
@@ -211,5 +211,6 @@ class Gwen:
         """
         Uses the Configured TTS Engine to speak the given text.
         """
+        print(f'Gwen: {text}')
         pass # TODO: Actually implement this
         

@@ -34,6 +34,7 @@ class CommandController(object):
         for _ in range(3):
             try: 
                 response = openai.Completion.create(model="text-davinci-003",prompt=prompt,temperature=1,max_tokens=256,)['choices'][0]['text']
+                # response = openai.ChatCompletion.create(model="gpt-4",prompt=prompt,temperature=1,max_tokens=256,)['choices'][0]['message']['content']
                 backend_cmd = extract_json(response)
                 # Extract Target Info
                 context_class, func = backend_cmd["target"].split(".")
