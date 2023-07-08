@@ -189,15 +189,12 @@ class Spotify:
         return Spotify.StatusCode.STOP.value
 
     #search query function
-    def search(self, query):
+    def search(self, searchQuery):
         
-        self.query = query
+        self.query = searchQuery
 
         #get id
         device_id=Spotify.getDevice(self)
-
-        # Search for the Song.
-        searchQuery = query
 
         #get results
         trackResults = self._sp.search(searchQuery,1,0,"track")

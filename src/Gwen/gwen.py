@@ -64,15 +64,18 @@ class Gwen:
             self.obj.stop()
 
         def exec(self, kwargs):
-            self.obj.play((kwargs['song']) + " " +kwargs.get('artist', "").strip())
+            if kwargs['func'] == "play":
+                self.obj.search((kwargs['song']) + " " +kwargs.get('artist', "").strip())
+            elif kwargs['func'] == "pause":
+                self.obj.pause()
         
         def validate_exec(self, kwargs) -> bool:
             assert isinstance(kwargs, dict) 
-            return (kwargs['target'] == "play" and kwargs.get('song', None) != None and kwargs.get('artist', "") != None or kwargs ['target'] == "pause")
+            return (kwargs['func'] == "play" and kwargs.get('song', None) != None and kwargs.get('artist', "") != None or kwargs ['func'] == "pause")
         
     class YouTubeContext(Context):
         def __init__(self, data):
-            super(Gwen.YoutubeContext, self).__init__(YouTubeClass(), data)
+            super(Gwen.YouTubeContext, self).__init__(YouTubeClass(), data)
             
         def run(self, is_main_context=False) -> None:
             return super().run(is_main_context) 
@@ -85,7 +88,7 @@ class Gwen:
         
         def validate_exec(self, kwargs) -> bool:
             assert isinstance(kwargs, dict) 
-            return (kwargs['target'] == "play" and kwargs.get('query', None) != None)
+            return (kwargs['func'] == "play" and kwargs.get('query', None) != None)
         
     class NetflixContext(Context):
         def __init__(self, data):
@@ -98,12 +101,12 @@ class Gwen:
             self.obj.quit()
         
         def exec(self, kwargs):
-            if kwargs['target'] == "play":
+            if kwargs['func'] == "play":
                 self.obj.play(kwargs['query'])
             
         def validate_exec(self, kwargs) -> bool:
             assert isinstance(kwargs, dict) 
-            return (kwargs['target'] == "watch" and kwargs.get('query', None) != None)
+            return (kwargs['func'] == "watch" and kwargs.get('query', None) != None)
              
     class GwenContext(Context):
         def __init__(self, data):
@@ -117,16 +120,16 @@ class Gwen:
             pass
         
         def exec(self, kwargs):
-            if kwargs['target'] == "output_speech":
+            if kwargs['func'] == "output_speech":
                 pass
-            elif kwargs['target'] == "clear_context":
+            elif kwargs['func'] == "clear_context":
                 self.obj.clear_context()
-            elif kwargs['target'] == "collect_keyword_data":
+            elif kwargs['func'] == "collect_keyword_data":
                 self.obj.collect_keyword_data(kwargs['num_samples'])
         
         def validate_exec(self, kwargs) -> bool:
             assert isinstance(kwargs, dict) 
-            return (kwargs['target'] == "output_speech" and kwargs.get('text', None) != None or kwargs ['target'] == "clear_context" or kwargs ['target'] == "collect_keyword_data" and kwargs.get('num_samples', None) != None and isinstance(kwargs['num_samples'], int))
+            return (kwargs['func'] == "output_speech" and kwargs.get('text', None) != None or kwargs ['func'] == "clear_context" or kwargs ['func'] == "collect_keyword_data" and kwargs.get('num_samples', None) != None and isinstance(kwargs['num_samples'], int))
 
     # --- Gwen Methods --- 
     def __new__(cls, *args, **kwargs):

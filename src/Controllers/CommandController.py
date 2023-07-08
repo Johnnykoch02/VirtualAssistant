@@ -39,12 +39,12 @@ class CommandController(object):
                 # Pull Context Class and Execute function.
                 cmd_kwargs = {key: value for key, value in backend_cmd.items() if key != "target"}
                 cmd_kwargs["func"] = func
-                context = self.ContextReferences[context_class](backend_cmd)
+                context = self.ContextReferences[context_class](backend_cmd,)
                 if context.validate_exec(cmd_kwargs):
-                    context.exec() # Execute the context.
+                    context.exec(cmd_kwargs) # Execute the context.
                     s = True
                     self.GwenInstance.add_context(context) # Add the current context to the GwenInstance.
-            except:
+            except Exception as e:
                 pass
             # Rerun the command if except, this means the target is not found, or the parameters were invalid.
             if s:
