@@ -19,6 +19,7 @@ def get_gwen_instance():
 class Gwen:
     GwenInstance = None
     # ----- Gwen Contexts -----
+    # TODO: ADD context threading for execution to allow for gwen to run in different threads.
     class Context:
         def __init__(self, obj, data):
             self.obj = obj # Maybe needs some sort of Target Data ??? Well see
@@ -38,6 +39,9 @@ class Gwen:
         
         def __repr__(self) -> str:
             return str(f'{self.obj}: {self.data}')
+        
+        def __str__(self) -> str:
+            return self.__repr__()
     
     class PassiveContext(Context):
         def __init__(self, data): # Fix this for Cmd Parser
@@ -66,7 +70,7 @@ class Gwen:
             assert isinstance(kwargs, dict) 
             return (kwargs['target'] == "play" and kwargs.get('song', None) != None and kwargs.get('artist', "") != None or kwargs ['target'] == "pause")
         
-    class YoutubeContext(Context):
+    class YouTubeContext(Context):
         def __init__(self, data):
             super(Gwen.YoutubeContext, self).__init__(YouTubeClass(), data)
             
@@ -127,13 +131,14 @@ class Gwen:
     # --- Gwen Methods --- 
     def __new__(cls, *args, **kwargs):
             if not cls.GwenInstance:
-                cls.GwenInstance = super(Gwen.Context, cls).__new__(cls, *args, **kwargs)
+                cls.GwenInstance = super(Gwen, cls).__new__(cls, *args, **kwargs)
             return cls.GwenInstance
         
     def __init__(self,):
         '''
         Initializes Gwen Instance,
         '''
+        print('Initializing Gwen Virtual Assistant...')
         def import_classes():
             global AudioControllerClass, CommandControllerClass, UserControllerClass, SpotifyClass, NetflixClass, YouTubeClass
             from ..Controllers.AudioController import AudioController
@@ -148,12 +153,11 @@ class Gwen:
             NetflixClass = Netflix
             # TODO: Init the Context Object Classes
             
-            
         import_classes()
+        self._AudioController = AudioControllerClass(self,)
+        self._CommandController = CommandControllerClass(self,)
         self._current_context = self.PassiveContext("")
-        self._AudioController = AudioControllerClass()
-        self._CommandController = CommandControllerClass()
-        self._Contexts = deque()
+        self._Contexts = deque([self._current_context], maxlen = 25)
         
     @staticmethod
     def Gwen():
@@ -167,7 +171,7 @@ class Gwen:
         """
         Passes the Command to the Command Controller for Execution.
         """
-        self._CommandController.ProcessCommand(cmd)
+        self._CommandController.ProcessCommand(cmd, self._current_context)
         
     def add_context(self, context) -> None:
         self._current_context = context

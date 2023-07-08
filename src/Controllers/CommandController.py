@@ -7,6 +7,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 class CommandController(object):
     def __init__(self, GwenInstance):
+        print("Initializing CommandController...")
         self.GwenInstance = GwenInstance
         self._config = get_json_variables(os.path.join(os.getcwd(), 'data', 'Gwen', 'Backend', 'CommandControllerConfig.json'), ["prompt_path","context","command", "bad_data_prompt"])
         with open(self._config["prompt_path"], 'r') as f:
@@ -26,12 +27,12 @@ class CommandController(object):
         """
         Processes the command through the Backend, switches the current context, and then executes the context before relinquishing control.
         """
-        prompt = self._gpt_prompt.replace(self._context, context).replace(self._command, command)
+        prompt = self._gpt_prompt.replace(self._context, str(context)).replace(self._command, command)
         s = False
         # Give the Command 3 times to execute, if it doesn't execute, then the target is not found, or the parameters were invalid. In this case, return a relavent response and don't continue. 
         for _ in range(3):
             try: 
-                response = openai.Completion.create(model="text-davinci-003",prompt=prompt,temperature=1,max_tokens=256,)['choices'][0]
+                response = openai.Completion.create(model="text-davinci-003",prompt=prompt,temperature=1,max_tokens=256,)['choices'][0]['text']
                 backend_cmd = extract_json(response)
                 # Extract Target Info
                 context_class, func = backend_cmd["target"].split(".")

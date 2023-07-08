@@ -149,3 +149,4 @@ dmypy.json
 /pickledcookies.pkl
 logs/
 data/Models/KeywordModel/Training/Sequences/Audio.zip
+data/Netflix/NetflixConfig.json

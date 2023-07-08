@@ -1,6 +1,7 @@
 import speech_recognition as sr
 import pyaudio
 from pydub import AudioSegment
+import tempfile
 import threading as th
 from enum import IntEnum
 from collections import deque
@@ -37,6 +38,7 @@ class AudioController(object):
     
     def __init__(self, GwenInstance):
         '''Basic Audio Control'''
+        print('Initializing Audio Controller...')
         self.GwenInstance = GwenInstance
         self.mic = pyaudio.PyAudio()
         # self._audio_th = th.Thread(target=self.audio_processor)
@@ -100,16 +102,25 @@ class AudioController(object):
             prediction = self.get_prediction()
             if prediction: # Stop the stream and Transition to Command Parsing
                 print("Engaged Gwen System.")
-                self._stream.stop_stream()
-                self.state.transition()
+                with self.__audio_buffer_lock: # Using this buffer lock ensures that we do not read from a different thread
+                    self._stream.stop_stream()
+                    self._stream.close()
+                    self.mic.terminate()
+                    self.state.transition()
                 
         elif self.state() == AudioController.State.Mode.STREAMING:
             # Use Microphone Audio to Predict Command-String
-            with self.mic as source:
-                    self.r.adjust_for_ambient_noise(source=source, duration=0.2)                                                             
+            source = sr.Microphone()
+            tmp_path = os.path.join(os.getcwd(), "tmp", "data", "sound", "temp_audio.wav")
+            with source as source:
+                    self.r.adjust_for_ambient_noise(source=source, duration=2.0)                                                             
                     try:
-                        temp_Audio = self.r.listen(source) 
-                        response = openai.Audio.transcribe("whisper-1",temp_Audio.get_wav_data())["text"]
+                        temp_audio = self.r.listen(source) 
+                        with open(tmp_path, 'wb') as tmp: # Create Temp Audio File for Whisper API
+                            tmp.write(temp_audio.get_wav_data())
+                        # Open and make API Call
+                        with open(tmp_path, 'rb') as audio_file:
+                            response = openai.Audio.transcribe("whisper-1", audio_file) ["text"]
                         self.state.transition()
                         self.GwenInstance.execute_command(response)
                     except sr.UnknownValueError as e:
@@ -118,7 +129,8 @@ class AudioController(object):
                     except sr.RequestError as e:
                         print("Could not request results; {0}".format(e))
                         self.state.transition(AudioController.State.Mode.LISTENING)
-                        
+                    finally:
+                        os.remove(tmp_path)
         elif self.state() == AudioController.State.Mode.TEMP:
             if is_main_context:
                 self.state.transition() # Asssuming Context took care of the rest.
