@@ -62,8 +62,10 @@ class KeywordAudioModel(nn.Module):
         return x
     
     def predict(self, x):
-        pred = self.forward(x).detach().cpu().float().squeeze(0).numpy()
-        return pred[1] > 0.7 and pred.argmax(dim=1) == 1 # Test this 
+        pred =self.forward(x).detach().cpu().float().squeeze(0).squeeze(0)
+        probs = th.nn.functional.softmax(pred, dim=0).numpy()
+        print(probs)
+        return (pred[1] > 0.7 and pred.argmax(dim=0) == 1).item() # Test this 
         
     
     @staticmethod

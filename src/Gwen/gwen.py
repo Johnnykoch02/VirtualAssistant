@@ -12,13 +12,11 @@ UserControllerClass = None
 SpotifyClass = None
 NetflixClass = None
 YouTubeClass = None
-SpeechClass = None
 
 def get_gwen_instance():
     return None
 
 class Gwen:
-    
     GwenInstance = None
     # ----- Gwen Contexts -----
     class Context:
@@ -31,6 +29,9 @@ class Gwen:
         
         def run(self, is_main_context =False) -> None:
             self.obj.run(self.data, is_main_context) # TODO: Actually implement this
+        
+        def quit(self,) -> None:
+            self.obj.quit(self.data) # TODO: Actually implement this
 
         def validate_exec(self, kwargs) -> bool:
             pass
@@ -45,19 +46,25 @@ class Gwen:
         def run(self, is_main_context=False) -> None: # Run Audio Controller
             return super().run(is_main_context)
         
+        def quit(self,) -> None:
+            self.obj.quit(self.data)
+        
     class SpotifyContext(Context):
         def __init__(self, data):
             super(Gwen.SpotifyContext, self).__init__(SpotifyClass(), data)
             
         def run(self, is_main_context=False) -> None:
             return super().run(is_main_context)    
+        
+        def quit(self,) -> None:
+            self.obj.stop()
 
         def exec(self, kwargs):
-            pass
+            self.obj.play((kwargs['song']) + " " +kwargs.get('artist', "").strip())
         
         def validate_exec(self, kwargs) -> bool:
             assert isinstance(kwargs, dict) 
-            return (kwargs['target'] == "play" and kwargs.get('song', None) != None and kwargs.get('artist', None) != None or kwargs ['target'] == "pause")
+            return (kwargs['target'] == "play" and kwargs.get('song', None) != None and kwargs.get('artist', "") != None or kwargs ['target'] == "pause")
         
     class YoutubeContext(Context):
         def __init__(self, data):
@@ -66,8 +73,11 @@ class Gwen:
         def run(self, is_main_context=False) -> None:
             return super().run(is_main_context) 
         
+        def quit(self,) -> None:
+            self.obj.quit()
+            
         def exec(self, kwargs):
-            pass   
+            self.obj.play(kwargs['query'], channel_name = kwargs.get('channel_name', None))   
         
         def validate_exec(self, kwargs) -> bool:
             assert isinstance(kwargs, dict) 
@@ -79,6 +89,9 @@ class Gwen:
              
         def run(self, is_main_context=False) -> None:
             return super().run(self.data, is_main_context)
+        
+        def quit(self,) -> None:
+            self.obj.quit()
         
         def exec(self, kwargs):
             if kwargs['target'] == "play":
@@ -94,37 +107,53 @@ class Gwen:
         
         def run(self, is_main_context=False) -> None:
             super().run(is_main_context)
+
+        def quit(self,) -> None:
+            # self.obj.quit()
+            pass
         
         def exec(self, kwargs):
-            pass
+            if kwargs['target'] == "output_speech":
+                pass
+            elif kwargs['target'] == "clear_context":
+                self.obj.clear_context()
+            elif kwargs['target'] == "collect_keyword_data":
+                self.obj.collect_keyword_data(kwargs['num_samples'])
         
         def validate_exec(self, kwargs) -> bool:
             assert isinstance(kwargs, dict) 
             return (kwargs['target'] == "output_speech" and kwargs.get('text', None) != None or kwargs ['target'] == "clear_context" or kwargs ['target'] == "collect_keyword_data" and kwargs.get('num_samples', None) != None and isinstance(kwargs['num_samples'], int))
 
     # --- Gwen Methods --- 
-
+    def __new__(cls, *args, **kwargs):
+            if not cls.GwenInstance:
+                cls.GwenInstance = super(Gwen.Context, cls).__new__(cls, *args, **kwargs)
+            return cls.GwenInstance
+        
     def __init__(self,):
         '''
         Initializes Gwen Instance,
         '''
         def import_classes():
-            global AudioControllerClass, CommandControllerClass, UserControllerClass
+            global AudioControllerClass, CommandControllerClass, UserControllerClass, SpotifyClass, NetflixClass, YouTubeClass
             from ..Controllers.AudioController import AudioController
             from ..Controllers.CommandController import CommandController
-            # from ..Controllers.UserController import UserController
+            from src.Gwen.APIHandlers.SpotifyAPI.load_cookies import Spotify
+            from src.ApplicationInterface.Netflix.interface import Netflix
+            from src.ApplicationInterface.Youtube.YoutubePlayer import YouTube
             AudioControllerClass = AudioController
-            CommandControllerClass = CommandController 
+            CommandControllerClass = CommandController
+            SpotifyClass = Spotify
+            YouTubeClass = YouTube
+            NetflixClass = Netflix
             # TODO: Init the Context Object Classes
             
             
         import_classes()
-        self._current_context = self.PassiveContext()
+        self._current_context = self.PassiveContext("")
         self._AudioController = AudioControllerClass()
         self._CommandController = CommandControllerClass()
-        
         self._Contexts = deque()
-        
         
     @staticmethod
     def Gwen():
@@ -148,6 +177,7 @@ class Gwen:
         [self._current_context.run(is_main_context = self._current_context == context) for context in self._Contexts] #TODO: Actually implement this
     
     def end_context(self, context) -> None:
+        context.quit()
         if context == self._current_context:
             self._current_context = self._Contexts.popleft()
         else:
@@ -157,7 +187,8 @@ class Gwen:
         """
         Clears the Current Context of Gwen.
         """
-        self._current_context = self.PassiveContext()
+        [context.quit() for context in self._Contexts]
+        self._current_context = self.PassiveContext("")
         self._Contexts = deque([self._current_context])
         
     def speech_output(self, text):

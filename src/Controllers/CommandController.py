@@ -27,12 +27,12 @@ class CommandController(object):
         Processes the command through the Backend, switches the current context, and then executes the context before relinquishing control.
         """
         prompt = self._gpt_prompt.replace(self._context, context).replace(self._command, command)
-        response = openai.Completion.create(model="text-davinci-003",prompt=prompt,temperature=1,max_tokens=256,)['choices'][0]
-        backend_cmd = extract_json(response)
         s = False
         # Give the Command 3 times to execute, if it doesn't execute, then the target is not found, or the parameters were invalid. In this case, return a relavent response and don't continue. 
         for _ in range(3):
             try: 
+                response = openai.Completion.create(model="text-davinci-003",prompt=prompt,temperature=1,max_tokens=256,)['choices'][0]
+                backend_cmd = extract_json(response)
                 # Extract Target Info
                 context_class, func = backend_cmd["target"].split(".")
                 # Pull Context Class and Execute function.
@@ -46,16 +46,12 @@ class CommandController(object):
             except:
                 pass
             # Rerun the command if except, this means the target is not found, or the parameters were invalid.
-            if not s:
-                prompt = self._gpt_prompt.replace(self._context, context).replace(self._command, command)
-                response = openai.Completion.create(model="text-davinci-003",prompt=prompt,temperature=1,max_tokens=256,)['choices'][0]['text']
-                backend_cmd = extract_json(response)
-            else:
+            if s:
                 break
             
         if not s:
             # TODO: Add a better error handling here.
-            pass
+            print('Failed to execute command.')
             
             
            

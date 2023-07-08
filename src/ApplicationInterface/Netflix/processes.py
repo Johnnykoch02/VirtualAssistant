@@ -16,16 +16,8 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException,
 def create_driver():
 
     # Determine the os type to be used in the driver path
-    # os_type = "windows" if sys.platform == "win32" else "linux"
-    # driver_executable = "chromedriver.exe" if sys.platform == "win32" else "chromedriver"
-
     os_type = "windows" if sys.platform == "win32" else "mac" if sys.platform == "darwin" else "linux"
-    driver_executable = "chromedriver.exe" if sys.platform == "win32" else "chromedriver"
-
-
-
-    driver_path = os.path.join(os.getcwd(), "data", "Selenium", "driver", os_type, driver_executable)
-    driver_runner = webdriver.Chrome
+    os.environ["PATH"] += os.path.join(os.getcwd(), "data", "Selenium", "driver", os_type)
     
     # Set's up options
     current_options = selenium.webdriver.chrome.options.Options()
@@ -33,13 +25,6 @@ def create_driver():
     current_options.add_experimental_option("useAutomationExtension", False)
     current_options.add_experimental_option("excludeSwitches",["enable-automation"])
     current_options.add_argument("--disable-notifications")
-
-    # Creates the driver Object to be used in interface.py
-    # try:
-    #     driver = driver_runner(
-    #         executable_path = driver_path,
-    #         options = current_options
-    #     )
     try:
         driver = webdriver.Chrome(
             # executable_path = driver_path,
@@ -48,7 +33,7 @@ def create_driver():
     except Exception as e:  # Catch any exception
         print(f"Error during driver creation: {e}")  # Print the error message
         raise SystemExit
-
+    
     driver.maximize_window()
 
     return driver

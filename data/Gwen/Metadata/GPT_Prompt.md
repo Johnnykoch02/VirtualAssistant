@@ -15,8 +15,9 @@ Gwen:
   def clear_context(): Clears all running contexts and switches back to passive mode.
   def collect_keyword_data(int num_samples): # Collects new user Keyword activations for the model to use and train.
   def output_speech(string text): # Uses the Configured TTS Engine to speak the given text.
+  
 YouTube:
-  def play(string query): # Searches and plays the top search result for the provided argument.
+  def play(string search_query, string channel_name = None): # Searches and plays the top search result for the provided query and channel if present. By default channel_name is none.
 
 Spotify:
   def play(string song, string artist): # Plays a Song with a specified artist
@@ -28,7 +29,9 @@ Netflix:
 For Example, if I said "Open up Spotify and play Radioactive by Imagine Dragons", the correct output would be:
 {"target": "Spotify.play", "song": "Radioactive", "artist": "Imagine Dragons"}
 Here's another example, "Play 3Blue1Brown's video series about deep learning", the correct output would be:
-{"target": "YouTube.play", "query": "3Blue1Brown Deep Learning"},
+{"target": "YouTube.play", "query": "Deep Learning", "channel_name": "3Blue1Brown"},
+Here is an example of YouTube play without the channel_name parameter, "Search YouTube for Funny Cat Videos", the correct output would be:
+{"target": "YouTube.play", "query": "Funny Cat Videos"}
 Here is another example of when the user is finished which should trigger a context clear, "Stop", "Turn this off", "Close the current application", and any variation of this as well. The correct output should be:
 {"target": "Gwen.clear_context"}
 Here is the last example: "What is Eulers Theorem?"

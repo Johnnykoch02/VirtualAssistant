@@ -1,15 +1,8 @@
 # This file contains the Netflix class used in main.py
-
-# import processes
-# import src.ApplicationInterface.Netflix.my_secrets as my_secrets
-# import json
 import os
 import src.ApplicationInterface.Netflix.processes as processes
 
 from src.utils import *
-
-# Define Chrome driver path
-
 class Netflix:
 
     def __init__(self):

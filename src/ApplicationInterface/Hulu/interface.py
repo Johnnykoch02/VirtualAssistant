@@ -1,13 +1,6 @@
-# This file contains the Netflix class used in main.py
-
-# import processes
-# import json
 import os
-import src.ApplicationInterface.Netflix.processes as processes
-
+import src.ApplicationInterface.Hulu.processes as processes
 from src.utils import *
-
-# Define Chrome driver path
 
 class Hulu:
 
@@ -21,7 +14,6 @@ class Hulu:
             processes.login(self.driver, self._config["EMAIL"], self._config["PASSWORD"], self._config["PREFERRED_USER"])
         except:
             processes.login(self.driver, self._config["EMAIL"], self._config["PASSWORD"], self._config["PREFERRED_USER"])
-            
 
     # Watch a show given a search query
     def watch(self, query):

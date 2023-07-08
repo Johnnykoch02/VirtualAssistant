@@ -38,10 +38,9 @@ class AudioController(object):
     def __init__(self, GwenInstance):
         '''Basic Audio Control'''
         self.GwenInstance = GwenInstance
-        self.States = AudioController.AudioStates
         self.mic = pyaudio.PyAudio()
-        self._audio_th = th.Thread(target=self.audio_processor)
-        self.img_th = th.Thread(target= self.AudioStreamWindow)
+        # self._audio_th = th.Thread(target=self.audio_processor)
+        # self.img_th = th.Thread(target= self.AudioStreamWindow)
         self.r = sr.Recognizer()
         self._audio_buffer = deque() 
         
@@ -61,8 +60,6 @@ class AudioController(object):
         self._prediction_model = KeywordAudioModel.Load_Model(os.path.join(os.getcwd(), self._config["model_path"]))
         self._data_output_path = os.path.join(os.getcwd(), self._config["data_output_path"])
         
-        
-        self._audio_th.start()
         self._stream = self.record_audio()
         
         
@@ -97,11 +94,12 @@ class AudioController(object):
     
     # --- Application API --- #
 
-    def run(self, is_main_context=False) -> None:
+    def run(self, data, is_main_context=False) -> None:
         if self.state() == AudioController.State.Mode.LISTENING:
             # Run Prediction on the Current Audio Stream 
             prediction = self.get_prediction()
             if prediction: # Stop the stream and Transition to Command Parsing
+                print("Engaged Gwen System.")
                 self._stream.stop_stream()
                 self.state.transition()
                 
@@ -113,7 +111,7 @@ class AudioController(object):
                         temp_Audio = self.r.listen(source) 
                         response = openai.Audio.transcribe("whisper-1",temp_Audio.get_wav_data())["text"]
                         self.state.transition()
-                        self.GwenInstance.
+                        self.GwenInstance.execute_command(response)
                     except sr.UnknownValueError as e:
                         print("Could not understand audio")
                         self.state.transition(AudioController.State.Mode.LISTENING)
@@ -140,7 +138,8 @@ class AudioController(object):
             img = np.expand_dims(img, axis=0)
         try:
             return self._prediction_model.predict(torch.tensor(img, device=self._prediction_model.device))
-        except:
+        except Exception as e:
+            print(e)
             return False # TODO: Add Logging of errors.
         
         
