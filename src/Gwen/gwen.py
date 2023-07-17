@@ -102,7 +102,7 @@ class Gwen:
             super(Gwen.NetflixContext, self).__init__(NetflixClass(), data)  
              
         def run(self, is_main_context=False) -> None:
-            return super().run(self.data, is_main_context)
+            return super().run(is_main_context)
         
         def quit(self,) -> None:
             self.obj.quit()
@@ -211,6 +211,7 @@ class Gwen:
         """
         Uses the Configured TTS Engine to speak the given text.
         """
-        print(f'Gwen: {text}')
-        pass # TODO: Actually implement this
+        # print(f'Gwen: {text}')
+        # TODO: Actually implement this
+        self._AudioController.speech_output(text)
         

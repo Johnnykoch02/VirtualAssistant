@@ -2,5 +2,7 @@
     "model_path": "data/Models/KeywordModel/Training/Checkpoints/KeywordCheckpoint_1000.zip",
     "data_output_path": "data/Models/KeywordModel/Training/Sequences/Audio",
     "n_mfcc": 28,
-    "max_len": 40
+    "max_len": 40,
+    "tts_header": "{\"Ocp-Apim-Subscription-Key\": \"<SubscriptionKey>\",\"Content-Type\": \"application/ssml+xml\",\"X-Microsoft-OutputFormat\": \"riff-24khz-16bit-mono-pcm\",\"User-Agent\": \"<ResourceName>\"}",
+    "tts_body": "<speak version='1.0' xmlns='https://www.w3.org/2001/10/synthesis' xml:lang='en-US'><voice name='en-GB-BellaNeural'>$BODY_SPEECH$</voice></speak>"
 }
