@@ -13,8 +13,7 @@ import json
 import os
 import time as t
 import openai
-openai.api_key = os.environ.get('OPENAI_API_KEY')
-from src.Gwen.AISystem.Networks import KeywordAudioModel
+from src.Gwen.AISystem.Networks import NonLSTMKeywordAudioModel, LSTMKeywordAudioModel
 import torch as torch
 from src.utils import get_mel_image_from_float_normalized, normalize_mfcc, get_json_variables
 
@@ -62,6 +61,7 @@ class AudioController(object):
         
         self._config = get_json_variables(os.path.join(os.getcwd(), 'data', 'Gwen', 'Audio', 'AudioControllerConfig.json'), ["model_path","data_output_path","n_mfcc","max_len", "tts_header", "tts_body"])
         
+        openai.api_key = os.environ.get('OPENAI_API_KEY')        
         self.n_mfcc = self._config["n_mfcc"]
         self.max_len = self._config["max_len"]
         
@@ -70,7 +70,7 @@ class AudioController(object):
                 
         # -- Neural Data -- #
         self._current_stream_img = self.buffer_to_img()    
-        self._prediction_model = KeywordAudioModel.Load_Model(os.path.join(os.getcwd(), self._config["model_path"]))
+        self._prediction_model = LSTMKeywordAudioModel.Load_Model(os.path.join(os.getcwd(), self._config["model_path"]))
         self._data_output_path = os.path.join(os.getcwd(), self._config["data_output_path"])
         
         # -- Azure TTS -- #
@@ -134,6 +134,7 @@ class AudioController(object):
                     self._stream.close()
                     self.mic.terminate()
                     self.state.transition()
+                    self._prediction_model.reset_hidden_state()
                 
         elif self.state() == AudioController.State.Mode.STREAMING:
             # Use Microphone Audio to Predict Command-String
@@ -207,8 +208,12 @@ class AudioController(object):
     # --- Data Collection API --- #
     def collect_data_sequence(self, num_samples, path, sample_episode=100, time_low=5, time_high=20):
         print('While collecting data, you will be prompted to provide audio. When prompted, make sure to respond promptly.\nThis will ensure proper data collection.')
+        self._stream.stop_stream()
+        self._stream.close()
+        self.mic.terminate()
+        source = sr.Microphone()
         for _ in range(num_samples):
-            with self.mic:  
+            with source as source:  
                 index = len(os.listdir(path))
                 record_time = np.random.randint(low=time_low, high=time_high)
                 try:  
@@ -217,7 +222,7 @@ class AudioController(object):
                     print('--- START ---')
                     print('...Collecting...')
                         
-                    audio = self.r.record(source=self.mic, duration=record_time)
+                    audio = self.r.record(source=source, duration=record_time)
                     
                     print('--- Finished Recording Sample ---')
                     with open(os.path.join(path, f'{index}.wav'), 'wb') as f:
