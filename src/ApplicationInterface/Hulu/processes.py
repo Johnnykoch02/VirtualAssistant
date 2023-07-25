@@ -2,7 +2,7 @@ import pickle
 import sys
 import os
 import datetime
-
+import selenium
 from selenium import webdriver
 import selenium.webdriver.chrome.options
 import selenium.webdriver.firefox.options
@@ -16,30 +16,15 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException,
 def create_driver():
 
     # Determine the os type to be used in the driver path
-    # os_type = "windows" if sys.platform == "win32" else "linux"
-    # driver_executable = "chromedriver.exe" if sys.platform == "win32" else "chromedriver"
-
     os_type = "windows" if sys.platform == "win32" else "mac" if sys.platform == "darwin" else "linux"
-    driver_executable = "chromedriver.exe" if sys.platform == "win32" else "chromedriver"
-
-
-
-    driver_path = os.path.join(os.getcwd(), "data", "Selenium", "driver", os_type, driver_executable)
+    os.environ["PATH"] += os.path.join(os.getcwd(), "data", "Selenium", "driver", os_type)
     driver_runner = webdriver.Chrome
-    
     # Set's up options
     current_options = selenium.webdriver.chrome.options.Options()
     # For disabling the "this browser is being controlled by automated software"
     current_options.add_experimental_option("useAutomationExtension", False)
     current_options.add_experimental_option("excludeSwitches",["enable-automation"])
     current_options.add_argument("--disable-notifications")
-
-    # Creates the driver Object to be used in interface.py
-    # try:
-    #     driver = driver_runner(
-    #         executable_path = driver_path,
-    #         options = current_options
-    #     )
     try:
         driver = webdriver.Chrome(
             # executable_path = driver_path,

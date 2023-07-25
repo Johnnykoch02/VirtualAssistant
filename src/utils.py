@@ -119,7 +119,7 @@ def GetAudioSplice(audioData, dataSamplesPerSplice, index):
 def extract_json(s: str):
     try:
         start = s.index('{')
-        end = s.rindex('}') + 1  # rindex gets the last occurrence
+        end = s.index('}') + 1  # index gets the first occurrence
         json_str = s[start:end]
         data = json.loads(json_str)
         return data

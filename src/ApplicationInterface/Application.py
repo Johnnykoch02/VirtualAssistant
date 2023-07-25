@@ -1,30 +1,51 @@
 import kivy
+from kivy.clock import Clock
+import os
+import time as t
+import threading as thr
 from kivy.app import App
 from kivy.uix.widget import Widget
-from kivy.uix.button import Button
-from kivy.uix.label import Label
-from kivy.uix.textinput import TextInput
-from kivy.core.window import Window
+from kivy.graphics import Color, Rectangle
+from kivy.clock import Clock
+import random
 
-Window.clearcolor = (0, 0.3, 0.6, 1)
+from src.Gwen.gwen import Gwen
 
-class MyApp(App):
+
+class VisualizerWidget(Widget):
+    def __init__(self, **kwargs):
+        super(VisualizerWidget, self).__init__(**kwargs)
+        self.rectangles = []
+
+    def on_size(self, *args):
+        self.rectangles.clear()
+        for _ in range(10):  # replace with the number of outputs
+            color = (random.random(), random.random(), random.random())
+            with self.canvas:
+                Color(*color)
+                rect = Rectangle(pos=self.pos, size=self.size)
+                self.rectangles.append(rect)
+
+    def update_rectangles(self, dt):
+        for rect in self.rectangles:
+            rect.pos = self.pos
+            rect.size = self.size
+            rect.size = (rect.size[0], rect.size[1] * (0.5 + 0.5 * random.random()))  # randomize the height
+
+    def start_visualization(self):
+        # self.sound.play()
+        Clock.schedule_interval(self.update_rectangles, 0.1)  # adjust as needed
+
+class VisualizerApp(App):
     def build(self):
-        self.textinput = TextInput(text='', multiline=False)
-        self.button = Button(text='Submit')
-        self.button.bind(on_press=self.reaction)
+        visualizer = VisualizerWidget()
+        visualizer.start_visualization()
+        self.Gwen = Gwen.Gwen()
+        self._app_thread = thr.Thread(target=self.backend_run, args=(0,))
+        self._app_thread.start()
+        return visualizer
 
-        self.label = Label(text='')
-
-        root_widget = Widget()
-        root_widget.add_widget(self.textinput)
-        root_widget.add_widget(self.button)
-        root_widget.add_widget(self.label)
-        return root_widget
-
-    def reaction(self, instance):
-        entered_text = self.textinput.text
-        self.label.text = 'You said: {}'.format(entered_text)
-
-if __name__=="__main__":
-    MyApp().run()
+    def backend_run(self, dt):
+        while True:
+            self.Gwen.run_context()
+            t.sleep(0.08)
