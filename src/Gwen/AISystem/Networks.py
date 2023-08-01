@@ -96,29 +96,33 @@ class LSTMKeywordAudioModel(nn.Module):
         self.lstm_hidden_size = lstm_hidden_size
         self.lstm_layers = lstm_layers
         self._ConvolutionalLayers = nn.Sequential(
-            nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(5,7), stride=3, padding=5, bias=True), # output (5 x 78 x 68)
-            nn.ReLU(),
-            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=(3, 3)), # Output (10 x 38 x 33)
-            nn.BatchNorm2d(64),
-            nn.ReLU(),
-            nn.MaxPool2d(2, 2),
-            nn.Conv2d(in_channels=64, out_channels=128, kernel_size=(2,2), stride=2), # Output (20 x 9 x 8)
-            nn.ReLU(),
-            nn.MaxPool2d(2, 2),
-            nn.Flatten(),
-        ) # Output 640
+             nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(8, 8), padding='same'),
+             nn.LeakyReLU(),
+             nn.Conv2d(in_channels=32, out_channels=64, kernel_size=(5, 5), padding='same'),
+             nn.LeakyReLU(),
+             nn.Conv2d(in_channels=64, out_channels=64, kernel_size=(4, 4), stride=2, padding=0),
+             nn.LeakyReLU(),
+             nn.MaxPool2d((3, 3)),
+             nn.Conv2d(in_channels=64, out_channels=128, kernel_size=(3, 3), padding=0),
+             nn.LeakyReLU(),
+             nn.MaxPool2d((3, 3)),
+             nn.Flatten(),
+        ) # Output Shape: (128, 10, 2)
         # self.Data_Path = os.path.join(os.getcwd(), "data","Models","KeywordModel","Training")
-        self.lstm = nn.LSTM(input_size=512, hidden_size=self.lstm_hidden_size, num_layers=self.lstm_layers, batch_first=True, )
+        self.lstm = nn.LSTM(input_size=640, hidden_size=self.lstm_hidden_size, num_layers=self.lstm_layers, batch_first=True, )
         self.fc = nn.Sequential(
-            nn.LayerNorm(self.lstm_hidden_size),
+            # nn.LayerNorm(self.lstm_hidden_size),
+            # nn.Dropout(p=0.15),
+            # nn.Linear(in_features=self.lstm_hidden_size, out_features=self.lstm_hidden_size,),
+            # nn.Tanh(),
+            # nn.Dropout(p=0.15),
+            # nn.Linear(in_features=self.lstm_hidden_size, out_features=self.lstm_hidden_size,),
+            # nn.Tanh(),
             nn.Dropout(p=0.2),
-            nn.Linear(in_features=self.lstm_hidden_size, out_features=self.lstm_hidden_size,),
-            nn.ReLU(),
-            nn.Dropout(p=0.2),
-            nn.Linear(in_features=self.lstm_hidden_size, out_features=64),
-            nn.ReLU(),
-            nn.Dropout(p=0.2),
-            nn.Linear(64, out_features=2),
+            nn.Linear(in_features=self.lstm_hidden_size, out_features=2),
+            # nn.Tanh(),
+            # nn.Dropout(p=0.15),
+            # nn.Linear(64, out_features=2),
         )
         self.device = 'cuda' if th.cuda.is_available() else 'cpu'
         self._hidden = self.init_hidden(self._batch_size)
@@ -142,7 +146,7 @@ class LSTMKeywordAudioModel(nn.Module):
         pred =self.forward(x).detach().cpu().float().squeeze(0).squeeze(0)
         probs = th.nn.functional.softmax(pred, dim=0).numpy()
         print(probs)
-        return (pred[1] > 0.7 and pred.argmax(dim=0) == 1).item()
+        return (pred[1] > 0.95 and pred.argmax(dim=0) == 1).item()
     
     def get_hidden(self):
         return self._hidden if self._hidden is not None else self.init_hidden()

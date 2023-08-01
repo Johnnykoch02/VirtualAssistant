@@ -12,6 +12,27 @@ We are currently working on building an installation for the project such that a
 
 ### *Installation Guide coming Soon*
 
+## Dependencies:
+
+### PortAudio (Mac/Linux)
+
+For Mac Users, If you have Homebrew installed, you can use the following command:
+```bash
+brew install portaudio
+```
+For Ubuntu users, you can use the following command:
+```bash
+sudo apt-get install portaudio19-dev
+```
+
+Alternatively, you can install it using Conda using the following command:
+```bash
+conda install -c conda-forge portaudio
+conda install portaudio
+```
+
+
+
 ## DEVELOPMENT GUIDE
 
 ### Backend API
