@@ -3,6 +3,7 @@ import pyaudio
 from pydub import AudioSegment
 from io import BytesIO
 from kivy.core.audio import SoundLoader
+# SoundLoader = None
 import requests
 import uuid
 import threading as th
@@ -124,7 +125,8 @@ class AudioController(object):
         if self.state() == AudioController.State.Mode.LISTENING:
             # Run Prediction on the Current Audio Stream 
             prediction = self.get_prediction()
-            if prediction: # Stop the stream and Transition to Command Parsing
+            # if prediction: # Stop the stream and Transition to Command Parsing
+            if input('press enter'):
                 print('Keyword detected...')
                 if self._currently_speaking:
                     self.sound_loader.stop()

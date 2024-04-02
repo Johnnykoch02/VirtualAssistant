@@ -8,7 +8,6 @@ from kivy.uix.widget import Widget
 from kivy.graphics import Color, Rectangle
 from kivy.clock import Clock
 import random
-
 from src.Gwen.gwen import Gwen
 
 
@@ -30,11 +29,15 @@ class VisualizerWidget(Widget):
         for rect in self.rectangles:
             rect.pos = self.pos
             rect.size = self.size
-            rect.size = (rect.size[0], rect.size[1] * (0.5 + 0.5 * random.random()))  # randomize the height
+            rect.size = (
+                rect.size[0],
+                rect.size[1] * (0.5 + 0.5 * random.random()),
+            )  # randomize the height
 
     def start_visualization(self):
         # self.sound.play()
         Clock.schedule_interval(self.update_rectangles, 0.1)  # adjust as needed
+
 
 class VisualizerApp(App):
     def build(self):
